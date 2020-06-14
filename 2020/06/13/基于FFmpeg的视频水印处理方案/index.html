@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="一. 背景 因政策需要, 五月底收到了一个应急视频水印的需求, 需要对下游生产出来的视频在转码之前进行加水印的处理, 来对视频的不同片段进行标记  二. 所需工具1. FFmpeg FFmpeg我们使用的是ffmpeg v4.2.3-static, 新版本的FFmpeg自带加水印功能, 老版本的可能需要自己编译  2. Linux字体支持 安装fontconfig yum install font">
+<meta name="keywords" content="FFmpeg,视频处理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于FFmpeg的视频水印处理方案">
+<meta property="og:url" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/index.html">
+<meta property="og:site_name" content="flyfish&#39;s blog">
+<meta property="og:description" content="一. 背景 因政策需要, 五月底收到了一个应急视频水印的需求, 需要对下游生产出来的视频在转码之前进行加水印的处理, 来对视频的不同片段进行标记  二. 所需工具1. FFmpeg FFmpeg我们使用的是ffmpeg v4.2.3-static, 新版本的FFmpeg自带加水印功能, 老版本的可能需要自己编译  2. Linux字体支持 安装fontconfig yum install font">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/pic_watermark.png">
+<meta property="og:image" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/srt.png">
+<meta property="og:image" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/ass.png">
+<meta property="og:updated_time" content="2020-06-13T12:41:48.905Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于FFmpeg的视频水印处理方案">
+<meta name="twitter:description" content="一. 背景 因政策需要, 五月底收到了一个应急视频水印的需求, 需要对下游生产出来的视频在转码之前进行加水印的处理, 来对视频的不同片段进行标记  二. 所需工具1. FFmpeg FFmpeg我们使用的是ffmpeg v4.2.3-static, 新版本的FFmpeg自带加水印功能, 老版本的可能需要自己编译  2. Linux字体支持 安装fontconfig yum install font">
+<meta name="twitter:image" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/pic_watermark.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>基于FFmpeg的视频水印处理方案 | flyfish's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"><i class="fa fa-bookmark-o"></i>&nbsp;flyfish's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/have-fun.html" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>元素周期表</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">基于FFmpeg的视频水印处理方案
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2020-06-13 16:13:04 / 修改时间：20:41:48" itemprop="dateCreated datePublished" datetime="2020-06-13T16:13:04+08:00">2020-06-13</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/视频处理/" itemprop="url" rel="index"><span itemprop="name">视频处理</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="一-背景"><a href="#一-背景" class="headerlink" title="一. 背景"></a>一. 背景</h2><blockquote>
+<p>因政策需要, 五月底收到了一个应急视频水印的需求, 需要对下游生产出来的视频在转码之前进行加水印的处理, 来对视频的<strong>不同片段</strong>进行标记</p>
+</blockquote>
+<h2 id="二-所需工具"><a href="#二-所需工具" class="headerlink" title="二. 所需工具"></a>二. 所需工具</h2><h3 id="1-FFmpeg"><a href="#1-FFmpeg" class="headerlink" title="1. FFmpeg"></a>1. FFmpeg</h3><blockquote>
+<p>FFmpeg我们使用的是<a href="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz" target="_blank" rel="noopener">ffmpeg v4.2.3-static</a>, 新版本的FFmpeg自带加水印功能, 老版本的可能需要自己编译</p>
+</blockquote>
+<h3 id="2-Linux字体支持"><a href="#2-Linux字体支持" class="headerlink" title="2. Linux字体支持"></a>2. Linux字体支持</h3><ol>
+<li>安装fontconfig <code>yum install fontconfig</code>,</li>
+<li>将字体文件放入<code>/usr/share/fonts/chinese</code>目录中</li>
+<li>执行<code>fc-list :lang=zh</code>就可以看到安装好的字体文件</li>
+</ol>
+<h3 id="3-ass-srt-字幕文件"><a href="#3-ass-srt-字幕文件" class="headerlink" title="3. ass(srt)字幕文件"></a>3. ass(srt)字幕文件</h3><h2 id="三-FFmpeg加水印解决方案"><a href="#三-FFmpeg加水印解决方案" class="headerlink" title="三. FFmpeg加水印解决方案"></a>三. FFmpeg加水印解决方案</h2><h3 id="1-加图片水印"><a href="#1-加图片水印" class="headerlink" title="1. 加图片水印"></a>1. 加图片水印</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -i watermark.png -filter_complex <span class="string">"overlay=x=main_w-overlay_w:y=main_h-overlay_h"</span> pic_watermark.mp4</span><br></pre></td></tr></table></figure>
+<p>水印的位置由如下六个参数来界定.<br>图片水印的优点是水印的格式(字体,颜色,透明度等)可以由UI老师提前生成, 不用执行命令时去控制<br>但是这种水印方式加出来都是整个视频都加上了水印, 如果想要控制某个时间区间去加水印, 不太好控制. 这样也就无法满足本次需求, pass. </p>
+<ul>
+<li>main_h为输入视频的高度, </li>
+<li>main_w为输入视频的宽度, </li>
+<li>overlay_h为传入图片的高度, </li>
+<li>overlay_w为传入图片的宽度,</li>
+<li>x为水印左边界与视频左边界的距离</li>
+<li>y为水印上边界与视频上边界的距离</li>
+</ul>
+<p>加完水印的效果如下图<br><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/pic_watermark.png" alt="image.png"></p>
+<h3 id="2-加字幕水印-srt"><a href="#2-加字幕水印-srt" class="headerlink" title="2. 加字幕水印[srt]"></a>2. 加字幕水印[srt]</h3><blockquote>
+<p>图片水印无法满足需求, 我们再寻找其他解决方案的时候发现<strong>给视频多个时间区间加水印</strong>与<strong>电影字幕</strong>比较类似, 于是开始寻找给视频加字幕的解决方案. </p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -vf subtitles=watermark.srt srt_watermark.mp4</span><br></pre></td></tr></table></figure>
+<p>字幕内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1</span><br><span class="line">00:00:16,266 --&gt; 00:01:00,359</span><br><span class="line">FFMPEG</span><br><span class="line"></span><br><span class="line">2</span><br><span class="line">00:01:16,266 --&gt; 00:10:25,359</span><br><span class="line">FFMPEG</span><br></pre></td></tr></table></figure></p>
+<p>加出来的效果如下图, 这种方式可以解决按时间区间加水印的需求, 但是无法指定字幕格式, 无法指定字幕位置, 就是单纯的电影字幕(至少我没找到🤦‍♂️). 这种方式也无法满足需求, pass.<br><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/srt.png" alt="image.png"></p>
+<h3 id="3-加字幕水印-ass"><a href="#3-加字幕水印-ass" class="headerlink" title="3. 加字幕水印[ass]"></a>3. 加字幕水印[ass]</h3><p>ass字幕文件加水印可以定制很多个性化的东西, 话不多说, 上命令</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -vf <span class="string">"ass=watermark.ass"</span> ass_watermark.mp4</span><br></pre></td></tr></table></figure>
+<p>字幕文件内容为:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">[Script Info]</span><br><span class="line">Title: YYeTs</span><br><span class="line">Original Script: YYeTs</span><br><span class="line">Original Translation:</span><br><span class="line">Original Timing:</span><br><span class="line">Original Editing:</span><br><span class="line">Script Updated By:</span><br><span class="line">Update Details:</span><br><span class="line">ScriptType: v4.00+</span><br><span class="line">PlayResX: 384</span><br><span class="line">PlayResY: 288</span><br><span class="line">Timer: 100.0000</span><br><span class="line">Synch Point: 0</span><br><span class="line">WrapStyle: 0</span><br><span class="line">ScaledBorderAndShadow: no</span><br><span class="line"></span><br><span class="line">[Aegisub Project Garbage]</span><br><span class="line">Scroll Position: 483</span><br><span class="line">Active Line: 441</span><br><span class="line"></span><br><span class="line">[V4+ Styles]</span><br><span class="line">Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding</span><br><span class="line">Style: Default,HanziPen TC,24,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00FFFFFF,0,0,0,0,100,100,0,0,1,0,1,3,5,10,10,134</span><br><span class="line"></span><br><span class="line">[Events]</span><br><span class="line">Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text</span><br><span class="line">Dialogue: 0,0:00:00.12,0:10:34.29,Default,NTP,0,0,0,,&#123;\alpha&amp;H72&amp;&#125;大鱼海棠</span><br></pre></td></tr></table></figure></p>
+<p>Ass字幕文件比较复杂, 反正我是自己手写不出来, 这是我在网上下载了一个ass文件, 自己改了一些参数的最终样子.<br>其中第一部分<code>[Script Info]</code>和第二部分<code>[Aegisub Project Garbage]</code>的意义这里不关注,<br>第三部分<code>[V4+ Styles]</code>包含了所有样式的定义, <code>Format</code>行与<code>Style</code>行 为键值对, Format为Key, Style为Value, 可以定义多个Style, 根据Style.Name区分.<br>第四部分<code>[Events]</code>中, 依旧是Format为Key, Dialogue为每个时间区间, 字幕的各种参数, 包括起止时间, 样式, 以及文案.<br>其中一些Format.Key的意义如下</p>
+<ul>
+<li>Name: 样式的名字</li>
+<li>Fontname: 字体, 中文字体在Linux可以通过fc-list找到对应的英文名</li>
+<li>Fontsize: 字体大小</li>
+<li>PrimaryColour: 字幕颜色</li>
+<li>BackColour: 字体阴影颜色</li>
+<li>Bold: 是否加粗</li>
+<li>Italic: 是否斜体</li>
+<li>Underline: 是否下划线</li>
+<li>StrikeOut: 是否删除线</li>
+<li>ScaleX: 修改字体的宽度</li>
+<li>ScaleY: 修改字体的高度</li>
+<li>Spacing: 字符之间额外的间隙</li>
+<li>BorderStyle: 边框的样式。1 为边框 + 阴影，3 为不透明背景。</li>
+<li>Outline: 如果 BorderStyle 为 1，它定义了文字边框的像素宽度。</li>
+<li>Alignment: 字幕位置: 1,2,3 =&gt; 左下, 中下, 右下, 4,5,6 =&gt; 左中, 中中, 右中, 7,8,9=&gt; 左上, 中上, 右上</li>
+<li>MarginL: 到屏幕左边缘的距离</li>
+<li>MarginR: 到屏幕右边缘的距离</li>
+<li>MarginV: 屏幕垂直距离, 如果是底部字幕, 则是屏幕底部的距离</li>
+<li>Encoding: 定义字体的字符集或编码方式=&gt;0 为英文，134 为简体中文，136 为繁体中文</li>
+<li>样式覆写代码: 样式直接指定透明度试了很多次都不成功, 只好使用样式覆写代码来满足透明度的需求. {\alpha&amp;H72&amp;}为样式覆写代码, 可以重置样式, alpha指定透明度, 72/256=28% , 大概28%的透明度</li>
+</ul>
+<p>水印效果如下, 用的Mac自带的<code>翩翩体-简</code>, 右下, 底部10, 右屏幕10<br><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/ass.png" alt="image.png"></p>
+<h2 id="四-参考资料"><a href="#四-参考资料" class="headerlink" title="四. 参考资料"></a>四. 参考资料</h2><ol>
+<li><a href="https://moejj.com/ffmpeg-add-subtitles-and-watermark/" target="_blank" rel="noopener">ffmpeg同时添加水印和字幕，详细教程</a></li>
+<li><a href="https://github.com/weizhenye/ASS/wiki/ASS-%E5%AD%97%E5%B9%95%E6%A0%BC%E5%BC%8F%E8%A7%84%E8%8C%83" target="_blank" rel="noopener">ASS 字幕格式规范</a></li>
+</ol>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/FFmpeg/" rel="tag"># FFmpeg</a>
+          
+            <a href="/tags/视频处理/" rel="tag"># 视频处理</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/05/26/Golang常见错误/" rel="next" title="Golang常见错误">
+                <i class="fa fa-chevron-left"></i> Golang常见错误
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
+            
+              <p class="site-author-name" itemprop="name">flyfish</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一-背景"><span class="nav-text">一. 背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二-所需工具"><span class="nav-text">二. 所需工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-FFmpeg"><span class="nav-text">1. FFmpeg</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Linux字体支持"><span class="nav-text">2. Linux字体支持</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-ass-srt-字幕文件"><span class="nav-text">3. ass(srt)字幕文件</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三-FFmpeg加水印解决方案"><span class="nav-text">三. FFmpeg加水印解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-加图片水印"><span class="nav-text">1. 加图片水印</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-加字幕水印-srt"><span class="nav-text">2. 加字幕水印[srt]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-加字幕水印-ass"><span class="nav-text">3. 加字幕水印[ass]</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四-参考资料"><span class="nav-text">四. 参考资料</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">flyfish</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

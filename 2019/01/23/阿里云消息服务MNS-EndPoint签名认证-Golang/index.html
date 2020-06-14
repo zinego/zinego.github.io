@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="阿里云消息服务MNS EndPoint签名认证 Golang背景公司业务, 需要进行媒体转码服务, 转码之后需要接受阿里云的回调, 我们采用主题通知方式接受消息此时需要为阿里云提供一个暴露在公网上面的接口, 所以要避免非法的攻击调用. 此时使用阿里的EndPoint签名认证文档中已经有Java代码是如何进行验证的, 我在这里只是做了个转换.  思路 从x-mns-signing-cert-url">
+<meta name="keywords" content="加密&#x2F;签名&#x2F;安全">
+<meta property="og:type" content="article">
+<meta property="og:title" content="阿里云消息服务MNS EndPoint签名认证 Golang">
+<meta property="og:url" content="http://yoursite.com/2019/01/23/阿里云消息服务MNS-EndPoint签名认证-Golang/index.html">
+<meta property="og:site_name" content="flyfish&#39;s blog">
+<meta property="og:description" content="阿里云消息服务MNS EndPoint签名认证 Golang背景公司业务, 需要进行媒体转码服务, 转码之后需要接受阿里云的回调, 我们采用主题通知方式接受消息此时需要为阿里云提供一个暴露在公网上面的接口, 所以要避免非法的攻击调用. 此时使用阿里的EndPoint签名认证文档中已经有Java代码是如何进行验证的, 我在这里只是做了个转换.  思路 从x-mns-signing-cert-url">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-01-23T07:49:46.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="阿里云消息服务MNS EndPoint签名认证 Golang">
+<meta name="twitter:description" content="阿里云消息服务MNS EndPoint签名认证 Golang背景公司业务, 需要进行媒体转码服务, 转码之后需要接受阿里云的回调, 我们采用主题通知方式接受消息此时需要为阿里云提供一个暴露在公网上面的接口, 所以要避免非法的攻击调用. 此时使用阿里的EndPoint签名认证文档中已经有Java代码是如何进行验证的, 我在这里只是做了个转换.  思路 从x-mns-signing-cert-url">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/01/23/阿里云消息服务MNS-EndPoint签名认证-Golang/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>阿里云消息服务MNS EndPoint签名认证 Golang | flyfish's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"><i class="fa fa-bookmark-o"></i>&nbsp;flyfish's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/have-fun.html" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>元素周期表</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/23/阿里云消息服务MNS-EndPoint签名认证-Golang/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">阿里云消息服务MNS EndPoint签名认证 Golang
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-01-23 15:06:11 / 修改时间：15:49:46" itemprop="dateCreated datePublished" datetime="2019-01-23T15:06:11+08:00">2019-01-23</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/加密-签名-安全/" itemprop="url" rel="index"><span itemprop="name">加密/签名/安全</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="阿里云消息服务MNS-EndPoint签名认证-Golang"><a href="#阿里云消息服务MNS-EndPoint签名认证-Golang" class="headerlink" title="阿里云消息服务MNS EndPoint签名认证 Golang"></a>阿里云消息服务MNS EndPoint签名认证 Golang</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>公司业务, 需要进行媒体转码服务, 转码之后需要接受阿里云的回调, 我们采用<a href="https://help.aliyun.com/document_detail/44602.html?spm=a2c4g.11186623.6.628.7b4840d6n7oJN6" target="_blank" rel="noopener">主题通知方式接受消息</a><br>此时需要为阿里云提供一个暴露在公网上面的接口, 所以要避免非法的攻击调用. 此时使用阿里的<a href="https://help.aliyun.com/document_detail/27488.html?spm=a2c4g.11186623.2.11.663d440bGv2Qab" target="_blank" rel="noopener">EndPoint签名认证</a><br>文档中已经有Java代码是如何进行验证的, 我在这里只是做了个转换. </p>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><ul>
+<li>从x-mns-signing-cert-url中取出base64加密后的url, 解密, 获得url</li>
+<li>http请求url获取pem证书, 解析证书, 获取<strong>公钥</strong></li>
+<li>从header中获取<strong>待签名的字符串</strong></li>
+<li>从header中获取加密后的Authorization, 解密, 获得<strong>待验证的签名</strong></li>
+<li>sha1对<strong>待签名的字符串</strong>sha1加密, 进行sha1rsa签名, 与<strong>待验证的签名</strong>对比</li>
+</ul>
+<h3 id="Java代码"><a href="#Java代码" class="headerlink" title="Java代码"></a>Java代码</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SignDemo</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> Boolean <span class="title">authenticate</span><span class="params">(String method, String uri, Map&lt;String, String&gt; headers)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">//获取证书的URL</span></span><br><span class="line">            <span class="keyword">if</span> (!headers.containsKey(<span class="string">"x-mns-signing-cert-url"</span>)) &#123;</span><br><span class="line">                System.out.println(<span class="string">"x-mns-signing-cert-url Header not found"</span>);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            String cert = headers.get(<span class="string">"x-mns-signing-cert-url"</span>);</span><br><span class="line">            <span class="keyword">if</span> (cert.isEmpty()) &#123;</span><br><span class="line">                System.out.println(<span class="string">"x-mns-signing-cert-url empty"</span>);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            cert = <span class="keyword">new</span> String(Base64.decodeBase64(cert));</span><br><span class="line">            System.out.println(<span class="string">"x-mns-signing-cert-url:\t"</span> + cert);</span><br><span class="line">            <span class="comment">//根据URL获取证书，并从证书中获取公钥</span></span><br><span class="line">            URL url = <span class="keyword">new</span> URL(cert);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            DataInputStream in = <span class="keyword">new</span> DataInputStream(conn.getInputStream());</span><br><span class="line">            CertificateFactory cf = CertificateFactory.getInstance(<span class="string">"X.509"</span>);</span><br><span class="line">            Certificate c = cf.generateCertificate(in);</span><br><span class="line">            PublicKey pk = c.getPublicKey();</span><br><span class="line">            <span class="comment">//获取待签名字符串</span></span><br><span class="line">            String str2sign = getSignStr(method, uri, headers);</span><br><span class="line">            System.out.println(<span class="string">"String2Sign:\t"</span> + str2sign);</span><br><span class="line">            <span class="comment">//对Authorization字段做Base64解码</span></span><br><span class="line">            String signature = headers.get(<span class="string">"Authorization"</span>);</span><br><span class="line">            <span class="keyword">byte</span>[] decodedSign = Base64.decodeBase64(signature);</span><br><span class="line">            <span class="comment">//认证</span></span><br><span class="line">            java.security.Signature signetcheck = java.security.Signature.getInstance(<span class="string">"SHA1withRSA"</span>);</span><br><span class="line">            signetcheck.initVerify(pk);</span><br><span class="line">            signetcheck.update(str2sign.getBytes());</span><br><span class="line">            Boolean res = signetcheck.verify(decodedSign);</span><br><span class="line">            <span class="keyword">return</span> res;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> String <span class="title">getSignStr</span><span class="params">(String method, String uri, Map&lt;String, String&gt; headers)</span> </span>&#123;</span><br><span class="line">        StringBuilder sb = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">        sb.append(method);</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        sb.append(safeGetHeader(headers, <span class="string">"Content-md5"</span>));</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        sb.append(safeGetHeader(headers, <span class="string">"Content-Type"</span>));</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        sb.append(safeGetHeader(headers, <span class="string">"Date"</span>));</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        List&lt;String&gt; tmp = <span class="keyword">new</span> ArrayList&lt;String&gt;();</span><br><span class="line">        <span class="keyword">for</span> (Map.Entry&lt;String, String&gt; entry : headers.entrySet()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (entry.getKey().startsWith(<span class="string">"x-mns-"</span>)) &#123;</span><br><span class="line">                tmp.add(entry.getKey() + <span class="string">":"</span> + entry.getValue());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        Collections.sort(tmp);</span><br><span class="line">        <span class="keyword">for</span> (String kv : tmp) &#123;</span><br><span class="line">            sb.append(kv);</span><br><span class="line">            sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        sb.append(uri);</span><br><span class="line">        <span class="keyword">return</span> sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> String <span class="title">safeGetHeader</span><span class="params">(Map&lt;String, String&gt; headers, String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (headers.containsKey(name)) &#123;</span><br><span class="line">            <span class="keyword">return</span> headers.get(name);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">""</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        SignDemo sd = <span class="keyword">new</span> SignDemo();</span><br><span class="line">        Map&lt;String, String&gt; headers = <span class="keyword">new</span> HashMap&lt;String, String&gt;();</span><br><span class="line">        headers.put(<span class="string">"Authorization"</span>, <span class="string">"Mko2Azg9fhCw8qR6G7AeAFMyzjO9qn7LDA5/t9E+6X5XURXTqBUuhpK+K55UNhrnlE2UdDkRrwDxsaDP5ajQdg=="</span>);</span><br><span class="line">        headers.put(<span class="string">"Content-md5"</span>, <span class="string">"M2ViOTE2ZDEyOTlkODBjMjVkNzM4YjNhNWI3ZWQ1M2E="</span>);</span><br><span class="line">        headers.put(<span class="string">"Content-Type"</span>, <span class="string">"text/xml;charset=utf-8"</span>);</span><br><span class="line">        headers.put(<span class="string">"Date"</span>, <span class="string">"Tue, 23 Feb 2016 09:41:06 GMT"</span>);</span><br><span class="line">        headers.put(<span class="string">"x-mns-request-id"</span>, <span class="string">"56CC2932F0E3D5BD530685CB"</span>);</span><br><span class="line">        headers.put(<span class="string">"x-mns-signing-cert-url"</span>, <span class="string">"aHR0cDovL21uc3Rlc3Qub3NzLWNuLWhhbmd6aG91LmFsaXl1bmNzLmNvbS94NTA5X3B1YmxpY19jZXJ0aWZpY2F0ZS5wZW0="</span>);</span><br><span class="line">        headers.put(<span class="string">"x-mns-version"</span>, <span class="string">"2015-06-06"</span>);</span><br><span class="line">        Boolean res = sd.authenticate(<span class="string">"POST"</span>, <span class="string">"/notifications"</span>, headers);</span><br><span class="line">        System.out.println(<span class="string">"Authenticate result:"</span> + res);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Golang代码"><a href="#Golang代码" class="headerlink" title="Golang代码"></a>Golang代码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"crypto"</span></span><br><span class="line">	<span class="string">"crypto/rsa"</span></span><br><span class="line">	<span class="string">"crypto/sha1"</span></span><br><span class="line">	<span class="string">"crypto/x509"</span></span><br><span class="line">	<span class="string">"encoding/base64"</span></span><br><span class="line">	<span class="string">"encoding/pem"</span></span><br><span class="line">	<span class="string">"errors"</span></span><br><span class="line">	<span class="string">"io/ioutil"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">	<span class="string">"sort"</span></span><br><span class="line">	<span class="string">"strings"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AliNotification</span><span class="params">(method <span class="keyword">string</span>, uri <span class="keyword">string</span>, header http.Header)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">// 提取url , 获取证书, 解析出公钥</span></span><br><span class="line">	urlBase64 := header.Get(<span class="string">"x-mns-signing-cert-url"</span>)</span><br><span class="line">	<span class="keyword">if</span> urlBase64 == <span class="string">""</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"x-mns-signing-cert-url Header not found"</span>)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"x-mns-signing-cert-url Header not found"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	body, err := base64.StdEncoding.DecodeString(urlBase64)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"解码失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"解码失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	certUrl := <span class="keyword">string</span>(body)</span><br><span class="line">	log.Println(<span class="string">"x-mns-signing-cert-url:\t"</span>, certUrl)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 请求url, 获得证书</span></span><br><span class="line">	resp, err := http.Get(certUrl)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"请求x-mns-signing-cert-url失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"请求x-mns-signing-cert-url失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> resp.Body.Close()</span><br><span class="line">	body, err = ioutil.ReadAll(resp.Body)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"解析x-mns-signing-cert-url失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"解析x-mns-signing-cert-url失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 解析证书</span></span><br><span class="line">	p, rest := pem.Decode(body)</span><br><span class="line">	<span class="keyword">if</span> p == <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"获取公钥失败"</span>, <span class="keyword">string</span>(rest))</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"获取公钥失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	cert, err := x509.ParseCertificate(p.Bytes)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"证书文件格式不合法, 解析失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"证书文件格式不合法, 解析失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	publicKey, ok := cert.PublicKey.(*rsa.PublicKey)</span><br><span class="line">	<span class="keyword">if</span> ok == <span class="literal">false</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"公钥格式不正确"</span>)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"公钥格式不正确"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Println(cert.PublicKey)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取待签名字符串</span></span><br><span class="line">	str := <span class="string">""</span></span><br><span class="line">	str = str + method + <span class="string">"\n"</span></span><br><span class="line">	str = str + header.Get(<span class="string">"Content-md5"</span>) + <span class="string">"\n"</span></span><br><span class="line">	str = str + header.Get(<span class="string">"Content-Type"</span>) + <span class="string">"\n"</span></span><br><span class="line">	str = str + header.Get(<span class="string">"Date"</span>) + <span class="string">"\n"</span></span><br><span class="line">	<span class="keyword">var</span> arr sort.StringSlice</span><br><span class="line">	<span class="keyword">for</span> k, v := <span class="keyword">range</span> header &#123;</span><br><span class="line">		<span class="comment">// golang 的header.Set方法会将header里面key的首字母大写, 所以还要转换一下, 好傻</span></span><br><span class="line">		k = strings.ToLower(k)</span><br><span class="line">		<span class="keyword">if</span> strings.HasPrefix(k, <span class="string">"x-mns-"</span>) &amp;&amp; <span class="built_in">len</span>(v) != <span class="number">0</span> &#123;</span><br><span class="line">			arr = <span class="built_in">append</span>(arr, k+<span class="string">":"</span>+v[<span class="number">0</span>])</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	sort.Sort(arr)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="keyword">range</span> arr &#123;</span><br><span class="line">		str = str + arr[i] + <span class="string">"\n"</span></span><br><span class="line">	&#125;</span><br><span class="line">	str += uri</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 对Authorization字段做Base64解码</span></span><br><span class="line">	signature := header.Get(<span class="string">"Authorization"</span>)</span><br><span class="line">	decodeSign, err := base64.StdEncoding.DecodeString(signature)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"解码失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"解码失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Println(<span class="string">"String2Sign:\t"</span> + str)</span><br><span class="line"></span><br><span class="line">	hashed := sha1.Sum([]<span class="keyword">byte</span>(str))</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 认证</span></span><br><span class="line">	<span class="keyword">return</span> rsa.VerifyPKCS1v15(publicKey, crypto.SHA1, hashed[<span class="number">0</span>:sha1.Size], decodeSign)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	header := <span class="built_in">make</span>(http.Header)</span><br><span class="line">	header.Set(<span class="string">"Authorization"</span>, <span class="string">"Mko2Azg9fhCw8qR6G7AeAFMyzjO9qn7LDA5/t9E+6X5XURXTqBUuhpK+K55UNhrnlE2UdDkRrwDxsaDP5ajQdg=="</span>)</span><br><span class="line">	header.Set(<span class="string">"Content-md5"</span>, <span class="string">"M2ViOTE2ZDEyOTlkODBjMjVkNzM4YjNhNWI3ZWQ1M2E="</span>)</span><br><span class="line">	header.Set(<span class="string">"Content-Type"</span>, <span class="string">"text/xml;charset=utf-8"</span>)</span><br><span class="line">	header.Set(<span class="string">"Date"</span>, <span class="string">"Tue, 23 Feb 2016 09:41:06 GMT"</span>)</span><br><span class="line">	header.Set(<span class="string">"x-mns-request-id"</span>, <span class="string">"56CC2932F0E3D5BD530685CB"</span>)</span><br><span class="line">	header.Set(<span class="string">"x-mns-signing-cert-url"</span>, <span class="string">"aHR0cDovL21uc3Rlc3Qub3NzLWNuLWhhbmd6aG91LmFsaXl1bmNzLmNvbS94NTA5X3B1YmxpY19jZXJ0aWZpY2F0ZS5wZW0="</span>)</span><br><span class="line">	header.Set(<span class="string">"x-mns-version"</span>, <span class="string">"2015-06-06"</span>)</span><br><span class="line">	log.Println(AliNotification(<span class="string">"POST"</span>, <span class="string">"/notifications"</span>, header))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/加密-签名-安全/" rel="tag"># 加密/签名/安全</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/01/21/APUE-阅读笔记-第四章-文件和目录-第一部分/" rel="next" title="APUE 阅读笔记 第四章 文件和目录 第一部分">
+                <i class="fa fa-chevron-left"></i> APUE 阅读笔记 第四章 文件和目录 第一部分
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/01/25/RSA-加密算法初探/" rel="prev" title="RSA 加密算法初探">
+                RSA 加密算法初探 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
+            
+              <p class="site-author-name" itemprop="name">flyfish</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#阿里云消息服务MNS-EndPoint签名认证-Golang"><span class="nav-text">阿里云消息服务MNS EndPoint签名认证 Golang</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#背景"><span class="nav-text">背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#思路"><span class="nav-text">思路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java代码"><span class="nav-text">Java代码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Golang代码"><span class="nav-text">Golang代码</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">flyfish</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

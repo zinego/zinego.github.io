@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="第七章 进程环境7.1 引言本章内容:      1. 进程执行时,其main函数是如何被调用的.     2. 命令行参数是如何传递给新程序的     3. 典型的存储空间布局是什么样子的     4. 如何分配另外的存储空间     5. 进程如何使用环境变量     6. 进程的各种不同终止方案 7.2 main函数当内核执行c程序时(使用exec执行), 在调用main函数前先调用一个特殊">
+<meta name="keywords" content="UNIX,读书,C语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="APUE 阅读笔记 第七章 进程环境">
+<meta property="og:url" content="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/index.html">
+<meta property="og:site_name" content="flyfish&#39;s blog">
+<meta property="og:description" content="第七章 进程环境7.1 引言本章内容:      1. 进程执行时,其main函数是如何被调用的.     2. 命令行参数是如何传递给新程序的     3. 典型的存储空间布局是什么样子的     4. 如何分配另外的存储空间     5. 进程如何使用环境变量     6. 进程的各种不同终止方案 7.2 main函数当内核执行c程序时(使用exec执行), 在调用main函数前先调用一个特殊">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/exec.png">
+<meta property="og:image" content="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/memory.png">
+<meta property="og:updated_time" content="2019-02-19T09:46:55.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="APUE 阅读笔记 第七章 进程环境">
+<meta name="twitter:description" content="第七章 进程环境7.1 引言本章内容:      1. 进程执行时,其main函数是如何被调用的.     2. 命令行参数是如何传递给新程序的     3. 典型的存储空间布局是什么样子的     4. 如何分配另外的存储空间     5. 进程如何使用环境变量     6. 进程的各种不同终止方案 7.2 main函数当内核执行c程序时(使用exec执行), 在调用main函数前先调用一个特殊">
+<meta name="twitter:image" content="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/exec.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>APUE 阅读笔记 第七章 进程环境 | flyfish's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"><i class="fa fa-bookmark-o"></i>&nbsp;flyfish's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/have-fun.html" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>元素周期表</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">APUE 阅读笔记 第七章 进程环境
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-19 17:35:05 / 修改时间：17:46:55" itemprop="dateCreated datePublished" datetime="2019-02-19T17:35:05+08:00">2019-02-19</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="第七章-进程环境"><a href="#第七章-进程环境" class="headerlink" title="第七章 进程环境"></a>第七章 进程环境</h2><h3 id="7-1-引言"><a href="#7-1-引言" class="headerlink" title="7.1 引言"></a>7.1 引言</h3><pre><code>本章内容: 
+    1. 进程执行时,其main函数是如何被调用的.
+    2. 命令行参数是如何传递给新程序的
+    3. 典型的存储空间布局是什么样子的
+    4. 如何分配另外的存储空间
+    5. 进程如何使用环境变量
+    6. 进程的各种不同终止方案
+</code></pre><h3 id="7-2-main函数"><a href="#7-2-main函数" class="headerlink" title="7.2 main函数"></a>7.2 main函数</h3><pre><code>当内核执行c程序时(使用exec执行), 在调用main函数前先调用一个特殊的启动例程.
+可执行程序文件将此启动例程指定为程序的起始地址---这是由连接编辑器设置的.
+而连接编辑器则由C编译器调用. 
+</code></pre><h3 id="7-3-进程终止"><a href="#7-3-进程终止" class="headerlink" title="7.3 进程终止"></a>7.3 进程终止</h3><p><strong>正常终止</strong></p>
+<pre><code>1. 从main函数返回
+2. 调用exit
+3. 调用_exit或者_Exit
+4. 最后一个线程从启启动例程返回
+5. 从最后一个线程调用pthread_exit
+</code></pre><p><strong>异常终止</strong></p>
+<pre><code>1. 调用abort
+2. 接收到一个信号
+3. 最后一个线程对取消请求做出响应
+</code></pre><h4 id="1-退出函数"><a href="#1-退出函数" class="headerlink" title="1. 退出函数"></a>1. 退出函数</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">exit</span><span class="params">(<span class="keyword">int</span> status)</span></span>;</span><br><span class="line"><span class="keyword">void</span> _Exit(<span class="keyword">int</span> status);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">void</span> _exit(<span class="keyword">int</span> status);</span><br></pre></td></tr></table></figure>
+<pre><code>exit 函数总是执行一个标准IO库的清理关闭操作: 对于所有打开流调用fclose函数. 
+即: 输出缓冲中的所有数据都被冲洗
+</code></pre><p><strong>终止状态未定义</strong></p>
+<pre><code>a. 调用以上函数不带终止状态
+b. main执行了一个无返回值的return
+c. main没有声明返回类型为整型
+</code></pre><h4 id="2-函数atexit"><a href="#2-函数atexit" class="headerlink" title="2. 函数atexit"></a>2. 函数atexit</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">atexit</span><span class="params">(<span class="keyword">void</span> (*func)(<span class="keyword">void</span>))</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>进程可以登记多到32个函数, 将由exit调用, 这些函数被称为终止处理程序
+其中, atexit函数的参数是一个函数地址, 调用该函数不需要向它传递任何参数, 也没返回值. 
+登记顺序和调用顺序相反, 登记多次也会被调用多次.
+</code></pre><p><strong>和golang中的defer类似</strong></p>
+<pre><code>如果程序调用exec函数族中的任一函数, 则将清除所有已经安装的中终止处理程序
+</code></pre><p><img src="/2019/02/19/APUE-阅读笔记-第七章-进程环境/./exec.png" alt="Alt text"></p>
+<h3 id="7-4-命令行参数"><a href="#7-4-命令行参数" class="headerlink" title="7.4 命令行参数"></a>7.4 命令行参数</h3><pre><code>没啥好写的...
+</code></pre><h3 id="7-5-环境表"><a href="#7-5-环境表" class="headerlink" title="7.5 环境表"></a>7.5 环境表</h3><pre><code>全局变量environ包含了该指针数组的地址
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">char</span> **environ</span><br></pre></td></tr></table></figure>
+<h3 id="7-6-C程序的存储空间布局"><a href="#7-6-C程序的存储空间布局" class="headerlink" title="7.6 C程序的存储空间布局"></a>7.6 C程序的存储空间布局</h3><pre><code>C程序一直由下列几部分组成:
+1. 正文段: 这是由CPU执行的机器指令部分. 只读且可共享. 
+2. 初始化`数据段`: 包含了程序中需要明确地赋初值的变量. 
+3. 未初始化数据段: 通常称为bss段. 程序开始之前, 内核将此段终端数据初始化为0或者空指针. 
+4. 栈: 自动变量以及每次函数调用时所需要保存的信息都存放在此段中. 
+5. 堆: 动态存储分配. 
+</code></pre><p><img src="/2019/02/19/APUE-阅读笔记-第七章-进程环境/./memory.png" alt="Alt text"></p>
+<h3 id="7-7-共享库"><a href="#7-7-共享库" class="headerlink" title="7.7 共享库"></a>7.7 共享库</h3><pre><code>共享库使得可执行文件中不需要包含公用的库函数, 只需要在所有进程都可以引用的存储区中保存这种库例程的一个副本.
+程序第一次执行或者第一次调用某个库函数时, 使用动态链接的方法将程序与共享库连接. 
+这减少了每个可执行文件的长度, 怎能增加了一些运行时间开销.
+另一个优点是使用库的新版本代替老版本时不需要再对使用该库的程序重新连接编辑
+使用`-static` 阻止gcc使用共享库
+</code></pre><h3 id="7-8-存储空间分配"><a href="#7-8-存储空间分配" class="headerlink" title="7.8 存储空间分配"></a>7.8 存储空间分配</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">malloc</span><span class="params">(<span class="keyword">size_t</span> size)</span></span>; </span><br><span class="line"><span class="comment">// 分配指定字节数的存储区, 初始值不确定 </span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">calloc</span><span class="params">(<span class="keyword">size_t</span> nobj, <span class="keyword">size_t</span> size)</span></span>; </span><br><span class="line"><span class="comment">//为指定数量指定长度的对象分配存储空间, 每一位(bit)都初始化为0</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">realloc</span><span class="params">(<span class="keyword">void</span> *ptr, <span class="keyword">size_t</span> newsize)</span></span>;</span><br><span class="line"><span class="comment">// 增加或者减少以前分配区的长度, 可能发生拷贝, 初始值不确定</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">free</span><span class="params">(<span class="keyword">void</span> *ptr)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="7-9-环境变量"><a href="#7-9-环境变量" class="headerlink" title="7.9 环境变量"></a>7.9 环境变量</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">getenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>该函数返回一个指针, 指向name=value字符串中的value,
+我们应当使用getenv从环境中去一个指定环境变量的值, 而不是直接去访问environ
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">putenv</span><span class="params">(<span class="keyword">char</span> *str)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name, <span class="keyword">const</span> <span class="keyword">char</span> *value, <span class="keyword">int</span> rewrite)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">unsetenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br><span class="line"><span class="comment">// 以上函数只支持部分系统</span></span><br></pre></td></tr></table></figure>
+<pre><code>1. putenv取形式为name=value的字符串将其放到环境表中, 如果name已经存在, 则删除之前的定义.
+2. setenv将name设置为value,  如果已经存在name, 且rewrite非0, 首先删除其现在的定义, 否则不删除
+3. unsetenv删除name的定义, 即使不存在这种定义也不算错误
+</code></pre><h4 id="修改环境变量导致的内存变化"><a href="#修改环境变量导致的内存变化" class="headerlink" title="修改环境变量导致的内存变化"></a>修改环境变量导致的内存变化</h4><pre><code>1. 删除字符串: 在环境表中找到该指针, 然后将所有后续指针都向环境表首部顺次移动一个位置. 
+2. 修改字符串: 
+    1. 如果新的value的长度少于或者等于现有value的长度, 则只需要将新字符串复制到原字符串所在空间中
+    2. 如果新的value的长度大于现有的value的长度, 调用malloc分配空间, 并将字符串复制到该空间, 使环境表针对name的指针指向新分配区
+3. 如果要增加一个新的name, 调用malloc为name=value的字符串分配空间, 然后将字符串复制到该空间中
+    1.  如果是第一次增加一个新name, 则必须调用malloc为新的指针表分配空间, 
+        接着, 将原来的环境表复制到新的分配区,
+        并将指向新的name=value的字符串的指针存放在该指针表的末尾,
+        然后又将一个空指针存放在其后, 最后使environ指向新指针表.
+        注意: 只复制环境表, 环境表中存储的是指针, 原来的值依旧存储在栈顶之上
+    2.  如果不是第一次增加一个新name, 只需要调用realloc
+        以分配比原空间多存放一个指针的空间, 
+        然后将指向新的name=value字符串的指针存放在该表表尾, 后面跟着一个空指针
+</code></pre><h3 id="7-10-函数setjmp和longjmp"><a href="#7-10-函数setjmp和longjmp" class="headerlink" title="7.10 函数setjmp和longjmp"></a>7.10 函数setjmp和longjmp</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setjmp</span><span class="params">(jmp_buf env)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">longjmp</span><span class="params">(jmp_buf env, <span class="keyword">int</span> val)</span></span>; </span><br><span class="line"><span class="comment">// val 用来区分不同的longjmp, val会作为setjmp的返回值</span></span><br></pre></td></tr></table></figure>
+<pre><code>用于出现错误时, 直接丢弃中间调用函数的栈帧, 直接重新回到setjmp的位置
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">jmp_buf jmpbuffer;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">(<span class="keyword">int</span> a)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in %d\n"</span>, a);</span><br><span class="line">    <span class="keyword">if</span> (a &gt; <span class="number">10</span>) &#123;</span><br><span class="line">        longjmp(jmpbuffer, <span class="number">1</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        func(a + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"out %d\n"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">func1</span><span class="params">(<span class="keyword">int</span> a)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in %d\n"</span>, a);</span><br><span class="line">    <span class="keyword">if</span> (a &gt; <span class="number">10</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        func1(a + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"out %d\n"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    func1(<span class="number">1</span>); <span class="comment">// 普通的出错返回方式, 还需要一层一层回到被调用者函数那里, 最后才回到目的位置</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> x;</span><br><span class="line">    x = setjmp(jmpbuffer);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"setjmp %d\n"</span>, x);</span><br><span class="line">    <span class="keyword">if</span> (x != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// printf("%d error", x);</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    func(<span class="number">1</span>);<span class="comment">// 使用longjmp, 直接回到setjmp</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>自动变量(局部变量), 寄存器变量(register)和易失变量(volatile)</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f1</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f2</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> jmp_buf jmpbuffer;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> globval;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> autoval;</span><br><span class="line">    <span class="keyword">register</span> <span class="keyword">int</span> regival;</span><br><span class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> volaval;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> statval;</span><br><span class="line">    globval = <span class="number">1</span>;</span><br><span class="line">    autoval = <span class="number">2</span>;</span><br><span class="line">    regival = <span class="number">3</span>;</span><br><span class="line">    volaval = <span class="number">4</span>;</span><br><span class="line">    statval = <span class="number">5</span>;</span><br><span class="line">    <span class="keyword">if</span> (setjmp(jmpbuffer) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"after longjmp:\n"</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"globval = %d, autoval = %d, regival %d, volaval = %d, statval = %d\n"</span>, globval, autoval, regival, volaval, statval);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    globval = <span class="number">95</span>;</span><br><span class="line">    autoval = <span class="number">96</span>;</span><br><span class="line">    regival = <span class="number">97</span>;</span><br><span class="line">    volaval = <span class="number">98</span>;</span><br><span class="line">    statval = <span class="number">99</span>;</span><br><span class="line">    f1(autoval, regival, volaval, statval);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f1</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">int</span> j, <span class="keyword">int</span> k, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in f1():\n"</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"globval = %d, autoval = %d, regival %d, volaval = %d, statval = %d\n"</span>, globval, i, j, k, l);</span><br><span class="line">    f2();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    longjmp(jmpbuffer, <span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// gcc volatile_jmp.c</span></span><br><span class="line"><span class="comment">// gcc -O volatile_jmp.c</span></span><br></pre></td></tr></table></figure>
+<pre><code>全局变量, 静态变量, 易失变量不受影响
+自动变量和寄存器变量优化前后变化
+想要不变化, 使用volatile变成易失变量
+</code></pre><h3 id="7-11-函数getrlimit和setrlimit"><a href="#7-11-函数getrlimit和setrlimit" class="headerlink" title="7.11 函数getrlimit和setrlimit"></a>7.11 函数getrlimit和setrlimit</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, struct rlimit *rlptr)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> struct rlimit *rlptr)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>每一个进程都有一组资源限制, 其中一些可以用getrlimit和setrlimit函数查询或者更改
+1. 任何一个进程都可以将一个软限制更改为小于或者等于其硬限制值
+2. 任何一个进程都可以降低硬限制值, 但是必须大于或者等于其软限制值
+3. 只有超级用户可以提高硬限制值
+</code></pre>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/UNIX/" rel="tag"># UNIX</a>
+          
+            <a href="/tags/读书/" rel="tag"># 读书</a>
+          
+            <a href="/tags/C语言/" rel="tag"># C语言</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/" rel="next" title="APUE 阅读笔记 第六章 系统数据文件和信息">
+                <i class="fa fa-chevron-left"></i> APUE 阅读笔记 第六章 系统数据文件和信息
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/02/28/APUE-阅读笔记-第八章-进程控制/" rel="prev" title="APUE 阅读笔记 第八章 进程控制">
+                APUE 阅读笔记 第八章 进程控制 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
+            
+              <p class="site-author-name" itemprop="name">flyfish</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#第七章-进程环境"><span class="nav-text">第七章 进程环境</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#7-1-引言"><span class="nav-text">7.1 引言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-2-main函数"><span class="nav-text">7.2 main函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-3-进程终止"><span class="nav-text">7.3 进程终止</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-退出函数"><span class="nav-text">1. 退出函数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-函数atexit"><span class="nav-text">2. 函数atexit</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-4-命令行参数"><span class="nav-text">7.4 命令行参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-5-环境表"><span class="nav-text">7.5 环境表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-6-C程序的存储空间布局"><span class="nav-text">7.6 C程序的存储空间布局</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-7-共享库"><span class="nav-text">7.7 共享库</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-8-存储空间分配"><span class="nav-text">7.8 存储空间分配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-9-环境变量"><span class="nav-text">7.9 环境变量</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#修改环境变量导致的内存变化"><span class="nav-text">修改环境变量导致的内存变化</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-10-函数setjmp和longjmp"><span class="nav-text">7.10 函数setjmp和longjmp</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-11-函数getrlimit和setrlimit"><span class="nav-text">7.11 函数getrlimit和setrlimit</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">flyfish</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

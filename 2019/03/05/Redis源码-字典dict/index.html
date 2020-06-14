@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="字典/哈希表1. 内存布局 该图新标签页打开看 1.1 dict12345678// dicttypedef struct dict &amp;#123;    dictType *type;          // type    void *privdata;          // paivate data    dictht ht[2];            // hash table    l">
+<meta name="keywords" content="C语言,源码阅读,Redis">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis源码-字典dict">
+<meta property="og:url" content="http://yoursite.com/2019/03/05/Redis源码-字典dict/index.html">
+<meta property="og:site_name" content="flyfish&#39;s blog">
+<meta property="og:description" content="字典/哈希表1. 内存布局 该图新标签页打开看 1.1 dict12345678// dicttypedef struct dict &amp;#123;    dictType *type;          // type    void *privdata;          // paivate data    dictht ht[2];            // hash table    l">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2019/03/05/Redis源码-字典dict/dict.png">
+<meta property="og:updated_time" content="2019-03-05T07:33:14.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Redis源码-字典dict">
+<meta name="twitter:description" content="字典/哈希表1. 内存布局 该图新标签页打开看 1.1 dict12345678// dicttypedef struct dict &amp;#123;    dictType *type;          // type    void *privdata;          // paivate data    dictht ht[2];            // hash table    l">
+<meta name="twitter:image" content="http://yoursite.com/2019/03/05/Redis源码-字典dict/dict.png">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/03/05/Redis源码-字典dict/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Redis源码-字典dict | flyfish's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"><i class="fa fa-bookmark-o"></i>&nbsp;flyfish's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/have-fun.html" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>元素周期表</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/05/Redis源码-字典dict/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Redis源码-字典dict
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-03-05 11:56:29 / 修改时间：15:33:14" itemprop="dateCreated datePublished" datetime="2019-03-05T11:56:29+08:00">2019-03-05</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C语言/" itemprop="url" rel="index"><span itemprop="name">C语言</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="字典-哈希表"><a href="#字典-哈希表" class="headerlink" title="字典/哈希表"></a>字典/哈希表</h2><h3 id="1-内存布局"><a href="#1-内存布局" class="headerlink" title="1. 内存布局"></a>1. 内存布局</h3><p><img src="/2019/03/05/Redis源码-字典dict/./dict.png" alt="Alt text"></p>
+<p><strong>该图新标签页打开看</strong></p>
+<h4 id="1-1-dict"><a href="#1-1-dict" class="headerlink" title="1.1 dict"></a>1.1 dict</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// dict</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dict</span> &#123;</span></span><br><span class="line">    dictType *type;          <span class="comment">// type</span></span><br><span class="line">    <span class="keyword">void</span> *privdata;          <span class="comment">// paivate data</span></span><br><span class="line">    dictht ht[<span class="number">2</span>];            <span class="comment">// hash table</span></span><br><span class="line">    <span class="keyword">long</span> rehashidx;          <span class="comment">/* rehashing not in progress if rehashidx == -1 */</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> iterators; <span class="comment">/* number of iterators currently running */</span></span><br><span class="line">&#125; dict;</span><br></pre></td></tr></table></figure>
+<pre><code>其中type指向dictType, 代表着不同类型的词典. 
+privdata 私有数据, 但是我暂时没明白是什么意思.
+每个词典有两个hash表, 一个用于正常使用, 一个用于rehash
+rehashidx对应rehash时原hash表的rehash的下标, 随着rehash的进行, rehashidx移动
+iterators对应迭代器
+</code></pre><h4 id="1-2-dictht"><a href="#1-2-dictht" class="headerlink" title="1.2 dictht"></a>1.2 dictht</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hash table </span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictht</span> &#123;</span></span><br><span class="line">    dictEntry **table;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> size;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> sizemask;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> used;</span><br><span class="line">&#125; dictht;</span><br></pre></td></tr></table></figure>
+<pre><code>每个hash表包含一个数组, 每个数组的元素指向一个链表, hash 的时候, 将key hash成i,
+那么该元素就会被添加到ht[0][i]后面.
+size指的是hash表中数组元素的个数
+sizemask=size-1 , 因为元素的下标是从0~size-1的
+used代表已经占用的桶的个数(桶=数组元素, 数组元素可以看成是桶的入口)
+</code></pre><h4 id="1-3-dictType"><a href="#1-3-dictType" class="headerlink" title="1.3 dictType"></a>1.3 dictType</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hash表的类型, 对于不同的类型, 实现的方法不同 </span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictType</span> &#123;</span></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * this is a pointer named 'keyDup', it point to a function,</span></span><br><span class="line"><span class="comment">     * and that function's return type is void*, parameters are two pointers */</span></span><br><span class="line">    <span class="keyword">uint64_t</span> (*hashFunction)(<span class="keyword">const</span> <span class="keyword">void</span> *key);</span><br><span class="line">    <span class="keyword">void</span> *(*keyDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key);</span><br><span class="line">    <span class="keyword">void</span> *(*valDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *obj);</span><br><span class="line">    <span class="keyword">int</span> (*keyCompare)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key1, <span class="keyword">const</span> <span class="keyword">void</span> *key2);</span><br><span class="line">    <span class="keyword">void</span> (*keyDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *key);</span><br><span class="line">    <span class="keyword">void</span> (*valDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *obj);</span><br><span class="line">&#125; dictType;</span><br></pre></td></tr></table></figure>
+<pre><code>hash表的类型, 
+其中`uint64_t (*hashFunction)(const void *key);`类似于这种结构, 代表着: 
+hashFunction是一个指针, 指向一个函数, 该函数以uint64_t类型为返回值, 参数是`const void *key`
+</code></pre><h4 id="1-4-dictEntry"><a href="#1-4-dictEntry" class="headerlink" title="1.4 dictEntry"></a>1.4 dictEntry</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// hash 表中单个结构</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictEntry</span> &#123;</span></span><br><span class="line">    <span class="keyword">void</span> *key;</span><br><span class="line">    <span class="keyword">union</span> &#123;</span><br><span class="line">        <span class="keyword">void</span> *val;     <span class="comment">//type val(string, struct)</span></span><br><span class="line">        <span class="keyword">uint64_t</span> u64;  <span class="comment">//type unsigned 64</span></span><br><span class="line">        <span class="keyword">int64_t</span> s64;   <span class="comment">//type signed 64</span></span><br><span class="line">        <span class="keyword">double</span> d;      <span class="comment">// type double</span></span><br><span class="line">    &#125; v;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">dictEntry</span> *<span class="title">next</span>;</span></span><br><span class="line">&#125; dictEntry;</span><br></pre></td></tr></table></figure>
+<pre><code>一个hash元素
+key = key
+v 是union类型, 可以容纳各种类型的值
+next如上图
+</code></pre><h3 id="2-hash"><a href="#2-hash" class="headerlink" title="2. hash"></a>2. hash</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * d -&gt; 字典</span></span><br><span class="line"><span class="comment"> * key -&gt; 键</span></span><br><span class="line"><span class="comment"> * hash -&gt; 被hash的key</span></span><br><span class="line"><span class="comment"> * existing -&gt; 返回存在的entry</span></span><br><span class="line"><span class="comment"> * 如果已经存在, 返回-1 </span></span><br><span class="line"><span class="comment"> * 如果不存在, 返回可以被hash的一个桶的下标</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">long</span> _dictKeyIndex(dict *d, <span class="keyword">const</span> <span class="keyword">void</span> *key, <span class="keyword">uint64_t</span> hash, dictEntry **existing) &#123;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> idx, table;</span><br><span class="line">    dictEntry *he;</span><br><span class="line">    <span class="keyword">if</span> (existing) *existing = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Expand the hash table if needed */</span></span><br><span class="line">    <span class="keyword">if</span> (_dictExpandIfNeeded(d) == DICT_ERR)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    <span class="keyword">for</span> (table = <span class="number">0</span>; table &lt;= <span class="number">1</span>; table++) &#123;</span><br><span class="line">        idx = hash &amp; d-&gt;ht[table].sizemask;</span><br><span class="line">        <span class="comment">/* Search if this slot does not already contain the given key */</span></span><br><span class="line">        he = d-&gt;ht[table].table[idx];</span><br><span class="line">        <span class="keyword">while</span> (he) &#123;</span><br><span class="line">            <span class="keyword">if</span> (key == he-&gt;key || dictCompareKeys(d, key, he-&gt;key)) &#123;</span><br><span class="line">                <span class="keyword">if</span> (existing) *existing = he;</span><br><span class="line">                <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            he = he-&gt;next;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/**</span></span><br><span class="line"><span class="comment">         * 如果没有正在被rehash, 那么直接退出, 此时找到了一个可以使用的idx,</span></span><br><span class="line"><span class="comment">         * 如果正在被rehash, 那么到ht[1]中寻找, 找不到的话, 返回一个ht[1]中可以使用的idx,</span></span><br><span class="line"><span class="comment">         * 保证了不会新增的数据不会被hash到ht[0]中</span></span><br><span class="line"><span class="comment">         **/</span></span><br><span class="line">        <span class="keyword">if</span> (!dictIsRehashing(d)) <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> idx;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * 如果key已经存在, 返回NULL, 而且如果existing非空, 它会被填充为已经存在的entry, </span></span><br><span class="line"><span class="comment"> * 如果key被添加, 返回被添加的hash entry</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function">dictEntry *<span class="title">dictAddRaw</span><span class="params">(dict *d, <span class="keyword">void</span> *key, dictEntry **existing)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> index;</span><br><span class="line">    dictEntry *entry;</span><br><span class="line">    dictht *ht;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (dictIsRehashing(d)) _dictRehashStep(d);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Get the index of the new element, or -1 if</span></span><br><span class="line"><span class="comment">     * the element already exists. */</span></span><br><span class="line">    <span class="keyword">if</span> ((index = _dictKeyIndex(d, key, dictHashKey(d, key), existing)) == <span class="number">-1</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Allocate the memory and store the new entry.</span></span><br><span class="line"><span class="comment">     * Insert the element in top, with the assumption that in a database</span></span><br><span class="line"><span class="comment">     * system it is more likely that recently added entries are accessed</span></span><br><span class="line"><span class="comment">     * more frequently. */</span></span><br><span class="line">    ht = dictIsRehashing(d) ? &amp;d-&gt;ht[<span class="number">1</span>] : &amp;d-&gt;ht[<span class="number">0</span>];</span><br><span class="line">    entry = zmalloc(<span class="keyword">sizeof</span>(*entry));</span><br><span class="line">    entry-&gt;next = ht-&gt;table[index];</span><br><span class="line">    ht-&gt;table[index] = entry;</span><br><span class="line">    ht-&gt;used++;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Set the hash entry fields. */</span></span><br><span class="line">    dictSetKey(d, entry, key);</span><br><span class="line">    <span class="keyword">return</span> entry;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>关于hash , 不同类型调用的是不同的hash方法(见dictType)
+字符串类型, 调用的是siphash, 关于这种hash方法, 我也没看懂... 
+关于存储, 一个key被hash成int类型的值h,
+h&amp;sizemask获得一个可以存储在hashtable中的一个桶的下标.
+然后开辟空间, 赋值, 将entry添加到桶的起始位置
+</code></pre><h3 id="3-rehash"><a href="#3-rehash" class="headerlink" title="3. rehash"></a>3. rehash</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">dictRehash</span><span class="params">(dict *d, <span class="keyword">int</span> n)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> empty_visits = n * <span class="number">10</span>; <span class="comment">/* Max number of empty buckets to visit. */</span></span><br><span class="line">    <span class="keyword">if</span> (!dictIsRehashing(d)) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (n-- &amp;&amp; d-&gt;ht[<span class="number">0</span>].used != <span class="number">0</span>) &#123;</span><br><span class="line">        dictEntry *de, *nextde;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* Note that rehashidx can't overflow as we are sure there are more</span></span><br><span class="line"><span class="comment">         * elements because ht[0].used != 0 */</span></span><br><span class="line">        assert(d-&gt;ht[<span class="number">0</span>].size &gt; (<span class="keyword">unsigned</span> <span class="keyword">long</span>)d-&gt;rehashidx);</span><br><span class="line">        <span class="keyword">while</span> (d-&gt;ht[<span class="number">0</span>].table[d-&gt;rehashidx] == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            d-&gt;rehashidx++;</span><br><span class="line">            <span class="keyword">if</span> (--empty_visits == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        de = d-&gt;ht[<span class="number">0</span>].table[d-&gt;rehashidx];</span><br><span class="line">        <span class="comment">/* Move all the keys in this bucket from the old to the new hash HT */</span></span><br><span class="line">        <span class="keyword">while</span> (de) &#123;</span><br><span class="line">            <span class="keyword">uint64_t</span> h;</span><br><span class="line"></span><br><span class="line">            nextde = de-&gt;next;</span><br><span class="line">            <span class="comment">/* Get the index in the new hash table */</span></span><br><span class="line">            h = dictHashKey(d, de-&gt;key) &amp; d-&gt;ht[<span class="number">1</span>].sizemask;</span><br><span class="line">            de-&gt;next = d-&gt;ht[<span class="number">1</span>].table[h];</span><br><span class="line">            d-&gt;ht[<span class="number">1</span>].table[h] = de;</span><br><span class="line">            d-&gt;ht[<span class="number">0</span>].used--;</span><br><span class="line">            d-&gt;ht[<span class="number">1</span>].used++;</span><br><span class="line">            de = nextde;</span><br><span class="line">        &#125;</span><br><span class="line">        d-&gt;ht[<span class="number">0</span>].table[d-&gt;rehashidx] = <span class="literal">NULL</span>;</span><br><span class="line">        d-&gt;rehashidx++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Check if we already rehashed the whole table... */</span></span><br><span class="line">    <span class="keyword">if</span> (d-&gt;ht[<span class="number">0</span>].used == <span class="number">0</span>) &#123;</span><br><span class="line">        zfree(d-&gt;ht[<span class="number">0</span>].table);</span><br><span class="line">        d-&gt;ht[<span class="number">0</span>] = d-&gt;ht[<span class="number">1</span>];</span><br><span class="line">        _dictReset(&amp;d-&gt;ht[<span class="number">1</span>]);</span><br><span class="line">        d-&gt;rehashidx = <span class="number">-1</span>;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* More to rehash... */</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>当hash表空间进行resize/expand时, 需要rehash, rehash的过程如下: 
+1.  将ht[1]指向新开辟的空间
+2.  将ht[0]迁移到ht[1]中, 迁移前后, 同一个元素获得的桶的下标可能变化(因为sizemask的变化)
+3.  rehash是一桶一桶的迁移的, 伴随着rehashidx的增加, 保证ht[0]中小于rehashidx的桶中无元素
+4.  对于rehash过程中新增的元素, 如果ht[0]中已经存在该key, 那么就返回, 如果不存在,
+    那么就在ht[1]中新增该key,详情见dictAddRaw和_dictKeyIndex方法
+5.  rehash过程发生在对dict进行增删改查时, 每次执行_dictRehashStep一次,
+    既保证了rehash过程的进行, 又将耗时比较长的整个rehash过程均分到每次操作中
+6.  rehash过程执行完成之后, ht[0]被释放, 然后ht[0]指向ht[1], ht[1]指向空,
+    rehashidx被置为零, rehash结束, ht[0]又成为唯一使用中的hash表
+</code></pre><h3 id="4-字典的遍历"><a href="#4-字典的遍历" class="headerlink" title="4. 字典的遍历"></a>4. 字典的遍历</h3><p>详情见<a href="https://blog.csdn.net/gqtcgq/article/details/50533336" target="_blank" rel="noopener">Redis源码解析：04字典的遍历dictScan</a></p>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/C语言/" rel="tag"># C语言</a>
+          
+            <a href="/tags/源码阅读/" rel="tag"># 源码阅读</a>
+          
+            <a href="/tags/Redis/" rel="tag"># Redis</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/02/28/Redis源码-动态字符串sds/" rel="next" title="Redis源码-动态字符串sds">
+                <i class="fa fa-chevron-left"></i> Redis源码-动态字符串sds
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/03/06/Redis源码-跳跃表skipList/" rel="prev" title="Redis源码-跳跃表skipList">
+                Redis源码-跳跃表skipList <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
+            
+              <p class="site-author-name" itemprop="name">flyfish</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#字典-哈希表"><span class="nav-text">字典/哈希表</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-内存布局"><span class="nav-text">1. 内存布局</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-1-dict"><span class="nav-text">1.1 dict</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-2-dictht"><span class="nav-text">1.2 dictht</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-3-dictType"><span class="nav-text">1.3 dictType</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#1-4-dictEntry"><span class="nav-text">1.4 dictEntry</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-hash"><span class="nav-text">2. hash</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-rehash"><span class="nav-text">3. rehash</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-字典的遍历"><span class="nav-text">4. 字典的遍历</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">flyfish</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

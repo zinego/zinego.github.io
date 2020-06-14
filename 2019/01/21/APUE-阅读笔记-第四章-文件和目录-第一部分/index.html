@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="周六写的东西, 忘了发. 周日躺尸一天, 今天比较忙...... 未更新, 发布周六学习的内容 第四章 文件和目录 第一部分4.1 引言1. 本章描述文件系统的其他特征和文件的性质 2. 了解文件的所有属性 3. 说明修改这个属性的各个函数 4. Unix文件系统的结构以及符号链接 5. 对目录进行操作的各个函数 6. 以降序便利目录层次结构的函数 4.2 函数stat, fstat, fstat">
+<meta name="keywords" content="UNIX,读书,C语言">
+<meta property="og:type" content="article">
+<meta property="og:title" content="APUE 阅读笔记 第四章 文件和目录 第一部分">
+<meta property="og:url" content="http://yoursite.com/2019/01/21/APUE-阅读笔记-第四章-文件和目录-第一部分/index.html">
+<meta property="og:site_name" content="flyfish&#39;s blog">
+<meta property="og:description" content="周六写的东西, 忘了发. 周日躺尸一天, 今天比较忙...... 未更新, 发布周六学习的内容 第四章 文件和目录 第一部分4.1 引言1. 本章描述文件系统的其他特征和文件的性质 2. 了解文件的所有属性 3. 说明修改这个属性的各个函数 4. Unix文件系统的结构以及符号链接 5. 对目录进行操作的各个函数 6. 以降序便利目录层次结构的函数 4.2 函数stat, fstat, fstat">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2019-01-25T12:36:38.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="APUE 阅读笔记 第四章 文件和目录 第一部分">
+<meta name="twitter:description" content="周六写的东西, 忘了发. 周日躺尸一天, 今天比较忙...... 未更新, 发布周六学习的内容 第四章 文件和目录 第一部分4.1 引言1. 本章描述文件系统的其他特征和文件的性质 2. 了解文件的所有属性 3. 说明修改这个属性的各个函数 4. Unix文件系统的结构以及符号链接 5. 对目录进行操作的各个函数 6. 以降序便利目录层次结构的函数 4.2 函数stat, fstat, fstat">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/01/21/APUE-阅读笔记-第四章-文件和目录-第一部分/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>APUE 阅读笔记 第四章 文件和目录 第一部分 | flyfish's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"><i class="fa fa-bookmark-o"></i>&nbsp;flyfish's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/have-fun.html" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>元素周期表</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/21/APUE-阅读笔记-第四章-文件和目录-第一部分/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">APUE 阅读笔记 第四章 文件和目录 第一部分
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-01-21 23:10:23" itemprop="dateCreated datePublished" datetime="2019-01-21T23:10:23+08:00">2019-01-21</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-01-25 20:36:38" itemprop="dateModified" datetime="2019-01-25T20:36:38+08:00">2019-01-25</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <pre><code>周六写的东西, 忘了发. 周日躺尸一天, 今天比较忙...... 未更新, 发布周六学习的内容
+</code></pre><h2 id="第四章-文件和目录-第一部分"><a href="#第四章-文件和目录-第一部分" class="headerlink" title="第四章 文件和目录 第一部分"></a>第四章 文件和目录 第一部分</h2><h3 id="4-1-引言"><a href="#4-1-引言" class="headerlink" title="4.1 引言"></a>4.1 引言</h3><pre><code>1. 本章描述文件系统的其他特征和文件的性质
+2. 了解文件的所有属性
+3. 说明修改这个属性的各个函数
+4. Unix文件系统的结构以及符号链接
+5. 对目录进行操作的各个函数
+6. 以降序便利目录层次结构的函数
+</code></pre><h3 id="4-2-函数stat-fstat-fstatat-和lstat"><a href="#4-2-函数stat-fstat-fstatat-和lstat" class="headerlink" title="4.2 函数stat, fstat, fstatat, 和lstat"></a>4.2 函数stat, fstat, fstatat, 和lstat</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">stat</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, struct stat* <span class="keyword">restrict</span> buf)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fstat</span><span class="params">(<span class="keyword">int</span> fd, struct stat *buf)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">lstat</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, struct stat * <span class="keyword">restrict</span> buf)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fstatat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, struct stat *<span class="keyword">restrict</span> buf, <span class="keyword">int</span> flag)</span></span>;</span><br><span class="line"><span class="comment">// 关于restrict: C语言中的一种类型限定符（Type Qualifiers），用于告诉编译器，</span></span><br><span class="line"><span class="comment">// 对象已经被指针所引用，不能通过除该指针外所有其他直接或间接的方式修改该对象的内容。</span></span><br></pre></td></tr></table></figure>
+<p><strong>区别</strong></p>
+<pre><code>stat函数返回与命名文件相关的信息结构
+fstat函数获得已在描述符fd上打开文件的有关信息
+lstat函数类似于stat, 但当命名文件是一个符号链接时,返回该链接信息, 而不是该链接指向的文件的信息
+fstatat 函数为一个相对于当前打开目录(由fd指向)的路径名返回文件统计信息. 
+</code></pre><p><strong>fstatat的flag</strong></p>
+<pre><code>flag参数控制着是否跟随一个符号链接
+AT_SYMLINK_NOFOLLOW标志被设置时, 不跟随.
+否则跟随
+如果fd参数的值AT_FDCWD, 
+    1. pathname是相对路径, fstatat会计算对于当前目录的pathname参数.
+    2. pathname是绝对路径, fd参数就会被忽略
+</code></pre><p><strong>buf</strong></p>
+<pre><code>函数通过填充buf来返回信息
+</code></pre><h3 id="4-3-文件类型"><a href="#4-3-文件类型" class="headerlink" title="4.3 文件类型"></a>4.3 文件类型</h3><p><strong>普通文件</strong></p>
+<pre><code>包含某种形式的数据. 
+普通文本和二进制数据都是普通文件, 对Linux内核而言并无区别.
+二进制可执行文件有特定的格式, 便于内核解析执行
+</code></pre><p><strong>目录文件</strong></p>
+<pre><code>包含其他文件的名字和指向这些文件有关信息的指针.
+只有内核可以直接写目录文件, 进程必须使用函数来能更改目录
+</code></pre><p><strong>块特殊文件</strong></p>
+<pre><code>提供对设备带缓冲的访问, 每次访问以固定长度为单位进行
+</code></pre><p><strong>字符特殊文件</strong></p>
+<pre><code>提供对设备不带缓冲的访问,长度可变.
+系统中的设备要么是字符特殊文件, 要么是块特殊文件
+</code></pre><p><strong>FIFO</strong></p>
+<pre><code>这种类型的文件用于进程间通信. 有时称之为命名管道
+</code></pre><p><strong>套接字</strong></p>
+<pre><code>用于进程间的网络通信, 也可用于一台主机进程之间的进程之间通信
+</code></pre><p><strong>符号链接</strong></p>
+<pre><code>用于指向另一个文件
+文件类型信息存储在stat结构中的st_mode成员中. 
+使用以下宏判断是文件类型
+    1. S_ISBLK(m)       block special
+    2. S_ISCHR(m)       char special
+    3. S_ISDIR(m)       directory
+    4. S_ISFIFO(m)    fifo or socket
+    5. S_ISREG(m)       regular file
+    6. S_ISLNK(m)       symbolic link
+    7. S_ISSOCK(m)    socket
+    8. S_TYPEISMQ(buf)        Test for a message queue
+    9. S_TYPEISSEM(buf)    Test for a semaphore
+    10. S_TYPEISSHM(buf)    Test for a shared memory object
+</code></pre><h3 id="4-4-设置用户ID和设置组ID"><a href="#4-4-设置用户ID和设置组ID" class="headerlink" title="4.4 设置用户ID和设置组ID"></a>4.4 设置用户ID和设置组ID</h3><p><strong>与进程相关联的ID</strong></p>
+<pre><code>1. 标识我们是谁
+    - 实际用户ID
+    - 实际组ID
+2. 决定我们的文件的访问属性
+    - 有效用户ID
+    - 有效组ID
+    - 附属组ID
+3. 由exec函数保存
+    - 保存的设置用户ID
+    - 保存的设置组ID
+
+
+通常, 进程的有效用户ID就是实际用户ID, 有效组ID通常是实际组ID
+但是可以设置st_mode一个特殊标志, 含义是:
+当执行此文件时, 进程的(有效用户ID/有效组ID)为文件所有者的(用户ID/组ID). `设置用户ID/组ID`
+通过这种方式, 可以使普通用户获得root权限.
+若文件所有者是超级用户, 并且设置了该文件的设置用户ID, 
+那么当该程序文件由一个进程执行时, 该进程具有超级用户权限
+</code></pre><p><strong>设置需谨慎</strong></p>
+<pre><code>设置用户ID和设置组ID都包含在st_mode值中, 可以分别用s__ISUID和S_ISGID设置
+</code></pre><h3 id="4-5-文件访问权限"><a href="#4-5-文件访问权限" class="headerlink" title="4.5 文件访问权限"></a>4.5 文件访问权限</h3><pre><code>st_mode值中包含了对文件(所有类型的文件)的访问权限位. 
+每个文件有9个权限位: 
+    1. 用户读/写/执行
+    2. 组读/写/执行
+    3. 其他读/写/执行
+</code></pre><hr>
+<p><strong>规则</strong></p>
+<pre><code>1. 用任意名字打开任意类型的文件时, 需要对从文件所在的目录 -&gt; 根目录的所有目录都具有执行权限. 读权限允许我们读目录,获得在该目录下所有文件的列表.
+2. 对一个文件的读权限决定了是否能够对当前文件进行读操作
+3. 对一个文件的写权限决定了是否能够对当前文件进行写操作
+4. 打开文件设置O_TRUNC必须对该文件具有写权限
+5. 为了在目录中创建一个新文件, 必须对该目录具有执行权限和写权限
+6. 为了删除一个现有的文件, 需要对目录具有写文件和执行权限, 对该文件本身不需要读写权限
+7. 如果用7个exec函数中的任意一个执行某个文件, 必须对该文件有可执行权限, 文件必须是普通文件
+</code></pre><hr>
+<p><strong>权限检测</strong></p>
+<pre><code>1. 检查进程的有效用户ID是否为0,
+2. 进程的有效用户ID等于文件的所有者ID
+3. 进程的有效组ID或进程的附属组ID等于文件的组ID
+4. 其他用户
+</code></pre><h3 id="4-6-新文件和目录的所有权"><a href="#4-6-新文件和目录的所有权" class="headerlink" title="4.6 新文件和目录的所有权"></a>4.6 新文件和目录的所有权</h3><pre><code>1. 新文件的用户ID设置为进程的有效用户ID. 
+2. 新文件的组ID可以使进程的有效组ID
+3. 新文件的组ID可以是它所在目录的组ID
+</code></pre><h3 id="4-7-函数access和faccessat"><a href="#4-7-函数access和faccessat" class="headerlink" title="4.7 函数access和faccessat"></a>4.7 函数access和faccessat</h3><pre><code>当open函数打开一个文件时, 内核以进程的有效用户ID和有效组ID为基础执行其访问测试权限
+但是, 有时进程也希望按实际用户ID和实际组ID来测试其访问功能.
+access和faccessat函数就是满足这种需求的
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">access</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">int</span> mode)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">faccessat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">int</span> mode, <span class="keyword">int</span> flag)</span></span>;</span><br><span class="line"><span class="comment">//成功返回0, 失败返回-1</span></span><br></pre></td></tr></table></figure>
+<p><strong>mode</strong></p>
+<pre><code>测试文件是否存在 F_OK
+测试读权限 R_OK
+测试写权限 W_OK
+测试执行权限 X_OK
+</code></pre><p><strong>异同</strong></p>
+<pre><code>faccessat 函数和access函数在下面两种情况下是相同的.
+1. pathname参数为绝对路径, 
+2. fd参数取值为AT_FDCWD而pathname为相对路径
+</code></pre><p><strong>flag</strong></p>
+<pre><code>flag参数可以用以改变faccessat的行为, 如果flag设置为AT_EACCESS ,
+访问检查用的是调用进程的有效用户ID和有效组ID, 而不是实际用户ID和实际组ID
+</code></pre><h3 id="4-8-函数umask"><a href="#4-8-函数umask" class="headerlink" title="4.8 函数umask"></a>4.8 函数umask</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">mode_t</span> <span class="title">umask</span><span class="params">(<span class="keyword">mode_t</span> cmask)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>umask函数为进程设置文件模式创建屏蔽字, 并返回之前的值
+其中cmask是4.5中9个常量中的若干按位或构成的
+在文件模式创建屏蔽字中为1的位, 文件中相应的为一定被关闭
+测试代码如下:
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    umask(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (creat(<span class="string">"foo"</span>, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"creat error for foo"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);</span><br><span class="line">    <span class="keyword">if</span> (creat(<span class="string">"bar"</span>, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"creat error for bar"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行之后, 发现foo是拥有rw-rw-rw-的权限的<br>但是umask屏蔽了<code>S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH</code> bar只有rw——-的权限</p>
+<h3 id="4-9-函数chmod-fchmod-fchmodat"><a href="#4-9-函数chmod-fchmod-fchmodat" class="headerlink" title="4.9 函数chmod, fchmod, fchmodat"></a>4.9 函数chmod, fchmod, fchmodat</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">chmod</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">mode_t</span> mode)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchmode</span><span class="params">(<span class="keyword">int</span> fd,<span class="keyword">mode_t</span> mode)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchmodeat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">mode_t</span> mode,<span class="keyword">int</span> flag)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>chmod 在指定的文件上操作, fchmod在打开的文件上操作, 
+fchmodat函数与chmod函数在下面两种情况下是相同的:
+1. pathname参数是绝对路径, 
+2. fd参数取值为AT_FDCWD, 而pathname为相对路径
+flag参数可以改变fchmodeat的行为,当设置了AT_SYMLINK_NOFOLLOW标志时, fchmodeat并不会跟随符号链接
+chmod只是更改i节点最近一次被修改的时间, ls -l列出的是最后修改文件内容的时间
+</code></pre><p><strong>新增标志位</strong></p>
+<pre><code>1. 执行时设置用户ID S_ISUID
+2. 执行时设置组ID S_ISGID
+3. 保存正文(粘着位) S_ISVTX
+4. S_IRWXU  用户读写执行
+5. S_IRWXG  组读写执行
+6. S_IRWXO  其他读写执行
+</code></pre><h3 id="4-10-粘着位"><a href="#4-10-粘着位" class="headerlink" title="4.10 粘着位"></a>4.10 粘着位</h3><pre><code>如果一个可执行文件的这一位被设置了, 那么当该程序第一次被执行, 
+在其终止时, 程序正文部分(机器指令)的一个副本仍被保存在交换区.
+使得下一次执行该程序时能够较快的将其装载入内存.
+现在的系统扩展了粘着位的适用范围, Single Unix Specification允许针对目录设置粘着位.
+如果对一个目录设置了粘着位, 只有对该目录具有写权限的用户且满足下列条件之一,
+才能`删除`或者`重命名`该目录下的文件(但是可以新建文件呀)
+1. 拥有该文件
+2. 拥有此目录
+3. 是超级用户
+</code></pre><h3 id="4-11-函数chown-fchown-fchownat和lchown"><a href="#4-11-函数chown-fchown-fchownat和lchown" class="headerlink" title="4.11 函数chown, fchown, fchownat和lchown"></a>4.11 函数chown, fchown, fchownat和lchown</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">chown</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">uid_t</span> owner, <span class="keyword">gid_t</span> group)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchown</span><span class="params">(<span class="keyword">int</span> fd, uid_towner, <span class="keyword">gid_t</span> group)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchownat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">uid_t</span> owner, <span class="keyword">gid_t</span> group, <span class="keyword">int</span> flag)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">lchown</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">uid_t</span> owner, <span class="keyword">gid_t</span> group)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>他们的区别主要在于绝对路径与相对路径, 或者是改变符号链接或者符号链接指向的文件的所有者
+</code></pre>
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/UNIX/" rel="tag"># UNIX</a>
+          
+            <a href="/tags/读书/" rel="tag"># 读书</a>
+          
+            <a href="/tags/C语言/" rel="tag"># C语言</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/01/17/APUE-阅读笔记-第三章-文件I-O/" rel="next" title="APUE 阅读笔记 第三章 文件I/O">
+                <i class="fa fa-chevron-left"></i> APUE 阅读笔记 第三章 文件I/O
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2019/01/23/阿里云消息服务MNS-EndPoint签名认证-Golang/" rel="prev" title="阿里云消息服务MNS EndPoint签名认证 Golang">
+                阿里云消息服务MNS EndPoint签名认证 Golang <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
+            
+              <p class="site-author-name" itemprop="name">flyfish</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">22</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">14</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#第四章-文件和目录-第一部分"><span class="nav-text">第四章 文件和目录 第一部分</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#4-1-引言"><span class="nav-text">4.1 引言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-2-函数stat-fstat-fstatat-和lstat"><span class="nav-text">4.2 函数stat, fstat, fstatat, 和lstat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-3-文件类型"><span class="nav-text">4.3 文件类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-4-设置用户ID和设置组ID"><span class="nav-text">4.4 设置用户ID和设置组ID</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-5-文件访问权限"><span class="nav-text">4.5 文件访问权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-6-新文件和目录的所有权"><span class="nav-text">4.6 新文件和目录的所有权</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-7-函数access和faccessat"><span class="nav-text">4.7 函数access和faccessat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-8-函数umask"><span class="nav-text">4.8 函数umask</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-9-函数chmod-fchmod-fchmodat"><span class="nav-text">4.9 函数chmod, fchmod, fchmodat</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-10-粘着位"><span class="nav-text">4.10 粘着位</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-11-函数chown-fchown-fchownat和lchown"><span class="nav-text">4.11 函数chown, fchown, fchownat和lchown</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">flyfish</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
