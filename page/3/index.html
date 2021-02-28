@@ -409,6 +409,1814 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/02/19/APUE-阅读笔记-第七章-进程环境/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">APUE 阅读笔记 第七章 进程环境</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-19 17:35:05 / 修改时间：17:46:55" itemprop="dateCreated datePublished" datetime="2019-02-19T17:35:05+08:00">2019-02-19</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="第七章-进程环境"><a href="#第七章-进程环境" class="headerlink" title="第七章 进程环境"></a>第七章 进程环境</h2><h3 id="7-1-引言"><a href="#7-1-引言" class="headerlink" title="7.1 引言"></a>7.1 引言</h3><pre><code>本章内容: 
+    1. 进程执行时,其main函数是如何被调用的.
+    2. 命令行参数是如何传递给新程序的
+    3. 典型的存储空间布局是什么样子的
+    4. 如何分配另外的存储空间
+    5. 进程如何使用环境变量
+    6. 进程的各种不同终止方案
+</code></pre><h3 id="7-2-main函数"><a href="#7-2-main函数" class="headerlink" title="7.2 main函数"></a>7.2 main函数</h3><pre><code>当内核执行c程序时(使用exec执行), 在调用main函数前先调用一个特殊的启动例程.
+可执行程序文件将此启动例程指定为程序的起始地址---这是由连接编辑器设置的.
+而连接编辑器则由C编译器调用. 
+</code></pre><h3 id="7-3-进程终止"><a href="#7-3-进程终止" class="headerlink" title="7.3 进程终止"></a>7.3 进程终止</h3><p><strong>正常终止</strong></p>
+<pre><code>1. 从main函数返回
+2. 调用exit
+3. 调用_exit或者_Exit
+4. 最后一个线程从启启动例程返回
+5. 从最后一个线程调用pthread_exit
+</code></pre><p><strong>异常终止</strong></p>
+<pre><code>1. 调用abort
+2. 接收到一个信号
+3. 最后一个线程对取消请求做出响应
+</code></pre><h4 id="1-退出函数"><a href="#1-退出函数" class="headerlink" title="1. 退出函数"></a>1. 退出函数</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">exit</span><span class="params">(<span class="keyword">int</span> status)</span></span>;</span><br><span class="line"><span class="keyword">void</span> _Exit(<span class="keyword">int</span> status);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">void</span> _exit(<span class="keyword">int</span> status);</span><br></pre></td></tr></table></figure>
+<pre><code>exit 函数总是执行一个标准IO库的清理关闭操作: 对于所有打开流调用fclose函数. 
+即: 输出缓冲中的所有数据都被冲洗
+</code></pre><p><strong>终止状态未定义</strong></p>
+<pre><code>a. 调用以上函数不带终止状态
+b. main执行了一个无返回值的return
+c. main没有声明返回类型为整型
+</code></pre><h4 id="2-函数atexit"><a href="#2-函数atexit" class="headerlink" title="2. 函数atexit"></a>2. 函数atexit</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">atexit</span><span class="params">(<span class="keyword">void</span> (*func)(<span class="keyword">void</span>))</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>进程可以登记多到32个函数, 将由exit调用, 这些函数被称为终止处理程序
+其中, atexit函数的参数是一个函数地址, 调用该函数不需要向它传递任何参数, 也没返回值. 
+登记顺序和调用顺序相反, 登记多次也会被调用多次.
+</code></pre><p><strong>和golang中的defer类似</strong></p>
+<pre><code>如果程序调用exec函数族中的任一函数, 则将清除所有已经安装的中终止处理程序
+</code></pre><p><img src="/2019/02/19/APUE-阅读笔记-第七章-进程环境/./exec.png" alt="Alt text"></p>
+<h3 id="7-4-命令行参数"><a href="#7-4-命令行参数" class="headerlink" title="7.4 命令行参数"></a>7.4 命令行参数</h3><pre><code>没啥好写的...
+</code></pre><h3 id="7-5-环境表"><a href="#7-5-环境表" class="headerlink" title="7.5 环境表"></a>7.5 环境表</h3><pre><code>全局变量environ包含了该指针数组的地址
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">char</span> **environ</span><br></pre></td></tr></table></figure>
+<h3 id="7-6-C程序的存储空间布局"><a href="#7-6-C程序的存储空间布局" class="headerlink" title="7.6 C程序的存储空间布局"></a>7.6 C程序的存储空间布局</h3><pre><code>C程序一直由下列几部分组成:
+1. 正文段: 这是由CPU执行的机器指令部分. 只读且可共享. 
+2. 初始化`数据段`: 包含了程序中需要明确地赋初值的变量. 
+3. 未初始化数据段: 通常称为bss段. 程序开始之前, 内核将此段终端数据初始化为0或者空指针. 
+4. 栈: 自动变量以及每次函数调用时所需要保存的信息都存放在此段中. 
+5. 堆: 动态存储分配. 
+</code></pre><p><img src="/2019/02/19/APUE-阅读笔记-第七章-进程环境/./memory.png" alt="Alt text"></p>
+<h3 id="7-7-共享库"><a href="#7-7-共享库" class="headerlink" title="7.7 共享库"></a>7.7 共享库</h3><pre><code>共享库使得可执行文件中不需要包含公用的库函数, 只需要在所有进程都可以引用的存储区中保存这种库例程的一个副本.
+程序第一次执行或者第一次调用某个库函数时, 使用动态链接的方法将程序与共享库连接. 
+这减少了每个可执行文件的长度, 怎能增加了一些运行时间开销.
+另一个优点是使用库的新版本代替老版本时不需要再对使用该库的程序重新连接编辑
+使用`-static` 阻止gcc使用共享库
+</code></pre><h3 id="7-8-存储空间分配"><a href="#7-8-存储空间分配" class="headerlink" title="7.8 存储空间分配"></a>7.8 存储空间分配</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">malloc</span><span class="params">(<span class="keyword">size_t</span> size)</span></span>; </span><br><span class="line"><span class="comment">// 分配指定字节数的存储区, 初始值不确定 </span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">calloc</span><span class="params">(<span class="keyword">size_t</span> nobj, <span class="keyword">size_t</span> size)</span></span>; </span><br><span class="line"><span class="comment">//为指定数量指定长度的对象分配存储空间, 每一位(bit)都初始化为0</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">realloc</span><span class="params">(<span class="keyword">void</span> *ptr, <span class="keyword">size_t</span> newsize)</span></span>;</span><br><span class="line"><span class="comment">// 增加或者减少以前分配区的长度, 可能发生拷贝, 初始值不确定</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">free</span><span class="params">(<span class="keyword">void</span> *ptr)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="7-9-环境变量"><a href="#7-9-环境变量" class="headerlink" title="7.9 环境变量"></a>7.9 环境变量</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">getenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>该函数返回一个指针, 指向name=value字符串中的value,
+我们应当使用getenv从环境中去一个指定环境变量的值, 而不是直接去访问environ
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">putenv</span><span class="params">(<span class="keyword">char</span> *str)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name, <span class="keyword">const</span> <span class="keyword">char</span> *value, <span class="keyword">int</span> rewrite)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">unsetenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br><span class="line"><span class="comment">// 以上函数只支持部分系统</span></span><br></pre></td></tr></table></figure>
+<pre><code>1. putenv取形式为name=value的字符串将其放到环境表中, 如果name已经存在, 则删除之前的定义.
+2. setenv将name设置为value,  如果已经存在name, 且rewrite非0, 首先删除其现在的定义, 否则不删除
+3. unsetenv删除name的定义, 即使不存在这种定义也不算错误
+</code></pre><h4 id="修改环境变量导致的内存变化"><a href="#修改环境变量导致的内存变化" class="headerlink" title="修改环境变量导致的内存变化"></a>修改环境变量导致的内存变化</h4><pre><code>1. 删除字符串: 在环境表中找到该指针, 然后将所有后续指针都向环境表首部顺次移动一个位置. 
+2. 修改字符串: 
+    1. 如果新的value的长度少于或者等于现有value的长度, 则只需要将新字符串复制到原字符串所在空间中
+    2. 如果新的value的长度大于现有的value的长度, 调用malloc分配空间, 并将字符串复制到该空间, 使环境表针对name的指针指向新分配区
+3. 如果要增加一个新的name, 调用malloc为name=value的字符串分配空间, 然后将字符串复制到该空间中
+    1.  如果是第一次增加一个新name, 则必须调用malloc为新的指针表分配空间, 
+        接着, 将原来的环境表复制到新的分配区,
+        并将指向新的name=value的字符串的指针存放在该指针表的末尾,
+        然后又将一个空指针存放在其后, 最后使environ指向新指针表.
+        注意: 只复制环境表, 环境表中存储的是指针, 原来的值依旧存储在栈顶之上
+    2.  如果不是第一次增加一个新name, 只需要调用realloc
+        以分配比原空间多存放一个指针的空间, 
+        然后将指向新的name=value字符串的指针存放在该表表尾, 后面跟着一个空指针
+</code></pre><h3 id="7-10-函数setjmp和longjmp"><a href="#7-10-函数setjmp和longjmp" class="headerlink" title="7.10 函数setjmp和longjmp"></a>7.10 函数setjmp和longjmp</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setjmp</span><span class="params">(jmp_buf env)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">longjmp</span><span class="params">(jmp_buf env, <span class="keyword">int</span> val)</span></span>; </span><br><span class="line"><span class="comment">// val 用来区分不同的longjmp, val会作为setjmp的返回值</span></span><br></pre></td></tr></table></figure>
+<pre><code>用于出现错误时, 直接丢弃中间调用函数的栈帧, 直接重新回到setjmp的位置
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">jmp_buf jmpbuffer;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">(<span class="keyword">int</span> a)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in %d\n"</span>, a);</span><br><span class="line">    <span class="keyword">if</span> (a &gt; <span class="number">10</span>) &#123;</span><br><span class="line">        longjmp(jmpbuffer, <span class="number">1</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        func(a + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"out %d\n"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">func1</span><span class="params">(<span class="keyword">int</span> a)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in %d\n"</span>, a);</span><br><span class="line">    <span class="keyword">if</span> (a &gt; <span class="number">10</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        func1(a + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"out %d\n"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    func1(<span class="number">1</span>); <span class="comment">// 普通的出错返回方式, 还需要一层一层回到被调用者函数那里, 最后才回到目的位置</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> x;</span><br><span class="line">    x = setjmp(jmpbuffer);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"setjmp %d\n"</span>, x);</span><br><span class="line">    <span class="keyword">if</span> (x != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// printf("%d error", x);</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    func(<span class="number">1</span>);<span class="comment">// 使用longjmp, 直接回到setjmp</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>自动变量(局部变量), 寄存器变量(register)和易失变量(volatile)</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f1</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f2</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> jmp_buf jmpbuffer;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> globval;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> autoval;</span><br><span class="line">    <span class="keyword">register</span> <span class="keyword">int</span> regival;</span><br><span class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> volaval;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> statval;</span><br><span class="line">    globval = <span class="number">1</span>;</span><br><span class="line">    autoval = <span class="number">2</span>;</span><br><span class="line">    regival = <span class="number">3</span>;</span><br><span class="line">    volaval = <span class="number">4</span>;</span><br><span class="line">    statval = <span class="number">5</span>;</span><br><span class="line">    <span class="keyword">if</span> (setjmp(jmpbuffer) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"after longjmp:\n"</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"globval = %d, autoval = %d, regival %d, volaval = %d, statval = %d\n"</span>, globval, autoval, regival, volaval, statval);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    globval = <span class="number">95</span>;</span><br><span class="line">    autoval = <span class="number">96</span>;</span><br><span class="line">    regival = <span class="number">97</span>;</span><br><span class="line">    volaval = <span class="number">98</span>;</span><br><span class="line">    statval = <span class="number">99</span>;</span><br><span class="line">    f1(autoval, regival, volaval, statval);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f1</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">int</span> j, <span class="keyword">int</span> k, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in f1():\n"</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"globval = %d, autoval = %d, regival %d, volaval = %d, statval = %d\n"</span>, globval, i, j, k, l);</span><br><span class="line">    f2();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    longjmp(jmpbuffer, <span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// gcc volatile_jmp.c</span></span><br><span class="line"><span class="comment">// gcc -O volatile_jmp.c</span></span><br></pre></td></tr></table></figure>
+<pre><code>全局变量, 静态变量, 易失变量不受影响
+自动变量和寄存器变量优化前后变化
+想要不变化, 使用volatile变成易失变量
+</code></pre><h3 id="7-11-函数getrlimit和setrlimit"><a href="#7-11-函数getrlimit和setrlimit" class="headerlink" title="7.11 函数getrlimit和setrlimit"></a>7.11 函数getrlimit和setrlimit</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, struct rlimit *rlptr)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> struct rlimit *rlptr)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>每一个进程都有一组资源限制, 其中一些可以用getrlimit和setrlimit函数查询或者更改
+1. 任何一个进程都可以将一个软限制更改为小于或者等于其硬限制值
+2. 任何一个进程都可以降低硬限制值, 但是必须大于或者等于其软限制值
+3. 只有超级用户可以提高硬限制值
+</code></pre>
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">APUE 阅读笔记 第六章 系统数据文件和信息</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-18 18:19:17" itemprop="dateCreated datePublished" datetime="2019-02-18T18:19:17+08:00">2019-02-18</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-02-19 17:42:42" itemprop="dateModified" datetime="2019-02-19T17:42:42+08:00">2019-02-19</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="第六章-系统数据文件和信息"><a href="#第六章-系统数据文件和信息" class="headerlink" title="第六章 系统数据文件和信息"></a>第六章 系统数据文件和信息</h2><h3 id="6-1-引言"><a href="#6-1-引言" class="headerlink" title="6.1 引言"></a>6.1 引言</h3><pre><code>Unix系统的正常运作需要使用大量与系统有关的数据文件.  这些文件都是ASCII文本文件.
+但是对于较大的系统, 顺序扫描口令文件很花费时间, 我们需要能够以非ASCII文本格式存放这些文件,
+但仍向使用其他文件格式的应用程序提供接口. 对于这些数据文件的可一直接口是本章的主题, 也包含系统标识函数, 时间和日期函数等.
+</code></pre><h3 id="6-2-口令文件"><a href="#6-2-口令文件" class="headerlink" title="6.2 口令文件"></a>6.2 口令文件</h3><pre><code>Unix系统口令文件包含了下图所示字段, 这些字段在&lt;pwd.h&gt;中定义的passwd结构中
+</code></pre><p><img src="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/./passwd.png" alt="Alt text"><br>    在Linux中, 该文件中可能有以下内容</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用户名:加密口令:数值用户ID:数值组ID:注释字段:初始工作目录:初始shell</span></span><br><span class="line">root:x:0:0:root:/root:/bin/bash</span><br><span class="line">squid:x:23:23::/var/spool/squid:/dev/null</span><br><span class="line">nobody:x:65534:65534:Nobody:/home:/bin/sh</span><br><span class="line">sar:x:205:105:Stephen Rago:/home/sar:/bin/bash</span><br></pre></td></tr></table></figure>
+<pre><code>1. 通常有一个用户名为root的登录项, 用户ID为0
+2. 加密口令字段包含了一个占位符, 但是解密口令字存放在另一个文件中
+3. 口令文件箱中的某些字段可能为空.如果为空, 通常意味着该用户没有口令. 
+4. shell字段包含了一个可执行程序名, 被用作该用户的登录shell. 
+5. 为了阻止一个特定用户登录, 除了使用/dev/null外, 还可以使用/bin/false用作登录shell
+6. 使用nobody作为用户名的目的是, 使任何人都可以登录该系统, 但只能访问人人皆可读写的文件.
+7. 使用finger命令的某些UNIX系统支持注释字段中的附加信息...感觉没啥用...
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwuid</span><span class="params">(<span class="keyword">uid_t</span> uid)</span></span>;</span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>这两个函数都返回的是passwd结构, 该接口通常是函数内部的静态变量, 
+只要调用任意相关函数, 其内容就会被重写. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setpwent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">endpwent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>getpwent</strong></p>
+<pre><code>调用getpwent时, 它返回口令文件中的下一个记录项. 每一次调用该函数, 都重写passwd结构. 第一次调用该函数时, 它打开使用的各个文件.
+</code></pre><p><strong>setpwent</strong></p>
+<pre><code>函数setpwent用来将getpwent的读写地址指向密码文件开头
+</code></pre><p><strong>endpwent</strong></p>
+<pre><code>endpwent关闭这些文件. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stddef.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *nam)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">passwd</span> *<span class="title">ptr</span>;</span></span><br><span class="line">    setpwent();</span><br><span class="line">    <span class="keyword">while</span> ((ptr = getpwent()) != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strcmp</span>(name, ptr-&gt;pw_name) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    endpwent();</span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>函数开始处调用setwent是自我保护性的措施, 一边确保之前有调用者打开过.
+</code></pre><h3 id="6-3-阴影文件"><a href="#6-3-阴影文件" class="headerlink" title="6.3 阴影文件"></a>6.3 阴影文件</h3><pre><code>现在某些系统将加密口令存放在另一个通常称为阴影口令的文件中, 该文件`至少要包括`用户名和加密口令.
+与该口令相关的其他信息也可以存放到该文件中.
+</code></pre><p><img src="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/./shadow.png" alt="Alt text"></p>
+<pre><code>仅有少数几个程序需要访问加密口令, 如login和passwd. 这些程序常常是设置用户ID为root的程序
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;shadow.h&gt;</span></span></span><br><span class="line"><span class="function">struct spwd *<span class="title">getspnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br><span class="line"><span class="function">struct spwd *<span class="title">getspent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setspent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">endspent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="6-4-组文件"><a href="#6-4-组文件" class="headerlink" title="6.4 组文件"></a>6.4 组文件</h3><pre><code>Unix组文件包含了下图所示字段, 这些字段包含在&lt;grp.h&gt;中定义的group结构中
+</code></pre><p><img src="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/./group.png" alt="Alt text"></p>
+<pre><code>字段**gr_mem是一个指针数组, 其中每个指针指向一个属于该组的用户名, 该数组以null指针结尾
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="function">struct group *<span class="title">getgrgid</span><span class="params">(<span class="keyword">gid_t</span> gid)</span></span>;</span><br><span class="line"><span class="function">struct group *<span class="title">getgrnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>这两个函数通常也返回一个静态变量的指针, 每次调用时都重写该静态变量...
+如果需要搜索整个组文件, 则需要使用另外几个函数.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="function">struct group *<span class="title">getgrent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setgrent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">endgrent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="6-5-附属组ID"><a href="#6-5-附属组ID" class="headerlink" title="6.5 附属组ID"></a>6.5 附属组ID</h3><pre><code>附属组ID: 我们不仅可以属于口令文件记录项中组ID对应的组, 也可以属于多至16个另外的组. 
+文件访问权限检查相应的修改为: 不仅将进程的有效组ID与文件的组ID相比较, 也将所有附属组ID与文件的组ID进行比较...
+使用附属组ID的优点是不必显式的经常更改组. 一个用户会参与多个项目, 因此需要同时属于多个组
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getgroup</span><span class="params">(<span class="keyword">int</span> gidsetsize, <span class="keyword">gid_t</span> grouplist[])</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setgroups</span><span class="params">(<span class="keyword">int</span> ngroups, <span class="keyword">const</span> <span class="keyword">gid_t</span> grouplist[])</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">initgroups</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *username, <span class="keyword">gid_t</span> basegid)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>getgroups将进程所属用户的各附属组ID填写到数组grouplist中, 填写入该数组的附属组ID数最多为gidsetsize个, 实际填写到数组中的附属组ID数由函数返回.
+作为一种特殊情况, 如果gidsetsize为0, 则函数只返回附属组ID数, 而对数组grouplist则不做修改..
+setgroups可以由超级用户调用以便为调用进程设置附属组ID表. grouplist是组ID数组, ngroups不大于NGROUP_MAX
+</code></pre><h3 id="6-8-登录账户记录"><a href="#6-8-登录账户记录" class="headerlink" title="6.8 登录账户记录"></a>6.8 登录账户记录</h3><pre><code>大多数UNIX系统都提供下面两个数据文件 , utmp文件记录当前登录到系统的各个用户,  wtmp文件跟踪各个登录和注销时间. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">utmp</span>&#123;</span></span><br><span class="line">    <span class="keyword">char</span> ut_line[<span class="number">8</span>]; <span class="comment">/* tty line: "ttyh0" ... */</span></span><br><span class="line">    <span class="keyword">char</span> ut_name[<span class="number">8</span>]; <span class="comment">/* login name */</span></span><br><span class="line">    <span class="keyword">long</span> ut_time;    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>login 程序填写, 注销时擦除</p>
+</blockquote>
+<h3 id="6-9-系统标识"><a href="#6-9-系统标识" class="headerlink" title="6.9 系统标识"></a>6.9 系统标识</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/utsname.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">uname</span><span class="params">(struct utsname *name)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">gethostname</span><span class="params">(<span class="keyword">char</span> *name, <span class="keyword">int</span> namelen)</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="6-10-时间和日期例程"><a href="#6-10-时间和日期例程" class="headerlink" title="6.10 时间和日期例程"></a>6.10 时间和日期例程</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">time_t</span> <span class="title">time</span><span class="params">(<span class="keyword">time_t</span> *calptr)</span></span></span><br></pre></td></tr></table></figure>
+<p><em>这一章看的价值不大, 需要时当工具查就行</em></p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/14/APUE-阅读笔记-第五章-标准I-O库/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/02/14/APUE-阅读笔记-第五章-标准I-O库/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">APUE 阅读笔记 第五章 标准I/O库</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-14 11:19:18" itemprop="dateCreated datePublished" datetime="2019-02-14T11:19:18+08:00">2019-02-14</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-02-19 17:42:37" itemprop="dateModified" datetime="2019-02-19T17:42:37+08:00">2019-02-19</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="第五章-标准I-O库"><a href="#第五章-标准I-O库" class="headerlink" title="第五章 标准I/O库"></a>第五章 标准I/O库</h2><h3 id="5-1-引言"><a href="#5-1-引言" class="headerlink" title="5.1 引言"></a>5.1 引言</h3><pre><code>不仅是UNIX, 很多其他操作系统都实现了标准I/O库, 所以这个库由ISO C标准说明
+</code></pre><h3 id="5-2-流和FILE对象"><a href="#5-2-流和FILE对象" class="headerlink" title="5.2 流和FILE对象"></a>5.2 流和FILE对象</h3><pre><code>在第三章中, 所有I/O函数都是围绕文件描述符的. 
+当打开一个文件, 返回一个文件描述符, 然后该文件描述符就用于后续的I/O操作.
+在标准I/O中, 他们的操作围绕流进行
+流的定向决定了所读写的字符是单字节还是多字节的.
+当一个流被创建的时候, 并没有被定向.
+如果在为定向的流上使用一个`多字节的I/O函数`, 则该流定向设置为`宽定向`的.
+如果在为定向的流上使用一个`单字节的I/O函数`, 则该流定向设置为`字节定向`的.
+只有两个函数可以改变流的定向, freopen函数清除一个流的定向, fwide函数可用于设置流的定向
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;wchar.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fwide</span><span class="params">(FILE *fp, <span class="keyword">int</span> mode)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>1. 如果mode参数值为负, fwide将试图使指定的流是字节定向的.
+2. 如果mode参数值为正, fwide将试图使指定的流是宽定向的.
+3. 如果mode参数值是0, fwide将不试图设置流的定向, 但返回标识该流定向的值
+
+fwide并不改变已经定向的流的定向, 此时fwide无错误返回. 
+当打开一个流的时候, 标准I/O函数fopen返回一个指向FILE对象的指针. 该对象通常是一个结构
+包含以下信息: 
+    1. 实际I/O的文件描述符
+    2. 指向用于该流缓冲区的指针
+    3. 缓冲区的长度
+    4. 当前在缓冲区的字节数
+    5. 出错标志
+</code></pre><h3 id="5-3-标准输入-标准输出和标准错误"><a href="#5-3-标准输入-标准输出和标准错误" class="headerlink" title="5.3 标准输入/标准输出和标准错误"></a>5.3 标准输入/标准输出和标准错误</h3><pre><code>对一个进程预定义了三个流, 标准输入, 标准输出和标准错误. 
+stdin, stdout, stderr分别与STDIN_FILENO, STDOUT_FILENO, STDERR_FILENO对应
+</code></pre><h3 id="5-4-缓冲"><a href="#5-4-缓冲" class="headerlink" title="5.4 缓冲"></a>5.4 缓冲</h3><pre><code>标准I/O提供缓冲的目的是尽可能减少使用read和write调用的次数.
+也对每个I/O流进行自动的缓冲管理, 避免了应用程序需要考虑这一点所带来的麻烦
+</code></pre><hr>
+<p><strong>缓冲类型</strong></p>
+<pre><code>1. 全缓冲:  在填满标准I/O缓冲区后才进行实际的I/O操作,对于驻留在磁盘上的文件通常是由标准I/O来实施全缓冲的.
+2. 行缓冲: 当输入或者输出遇到换行符的时候, 标准I/O进行实际的I/O操作.当流涉及终端时,通常使用行缓冲
+3. 不带缓冲: 标准I/O库不对字符进行缓冲存储. 标准错误流通常是不带缓冲的
+</code></pre><hr>
+<p><strong>ISO 要求的缓冲特征</strong></p>
+<pre><code>1. 当且仅当标准输入和标准输出并不指向交互式设备时,他们才是全缓冲的
+2. 标准错误绝对不是全缓冲的
+</code></pre><hr>
+<p><strong>冲洗(flush)</strong></p>
+<pre><code>冲洗来说明标准I/O缓冲区的写操作
+缓冲区可以由标准I/O例程自动冲洗, 或者调用fflush来冲洗一个流.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setbuf</span><span class="params">(FILE *<span class="keyword">restrict</span> fp, <span class="keyword">char</span> *<span class="keyword">restrict</span> buf)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setvbuf</span><span class="params">(FILE *<span class="keyword">restrict</span> fp, <span class="keyword">char</span> *<span class="keyword">restrict</span> buf, <span class="keyword">int</span> mode, <span class="keyword">size_t</span> size)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fflush</span><span class="params">(FILE *fp)</span></span>; <span class="comment">// 任何时候都可以冲洗一个流</span></span><br></pre></td></tr></table></figure>
+<pre><code>以上两个函数用来更改流的缓冲类型
+</code></pre><p><strong>setbuf</strong></p>
+<pre><code>可以使用setbuf函数打开或者关闭缓冲机制. 
+为了带缓冲进行I/O, 参数buf必须指向一个长度为BUFSIZ的缓冲区.(BUFSIZ是定义在&lt;stdio.h&gt;的常量)
+此时流就是全缓冲的, 如果与终端设备相关, 那么某些系统也会将其设置为行缓冲的.
+为了关闭缓冲,将buf设置为NULL
+</code></pre><p><strong>setvbuf</strong></p>
+<pre><code>使用setvbuf, 可以精确的说明所需的缓冲类型, 这是由mode参数实现的
+_IOFBF  全缓冲
+_IOLBF  行缓冲
+_IONBF  不带缓冲
+如果指定的是不带缓冲的流, 则忽略buf和size参数. 
+如果指定全缓冲或者行缓冲, 则buf和size可选择的指定一个缓冲区及其长度.
+如果指定的是带缓冲的, 而buf是NULL, 则标准IO库将自动的为该流分配适当长度(BUFSIZ)的缓冲区
+</code></pre><p><strong>记得关闭一个流</strong></p>
+<h3 id="5-5-打开流"><a href="#5-5-打开流" class="headerlink" title="5.5 打开流"></a>5.5 打开流</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function">FILE *<span class="title">fopen</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> type)</span></span>;</span><br><span class="line"><span class="function">FILE *<span class="title">freopen</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> type, FILE *<span class="keyword">restrict</span> fp)</span></span>;</span><br><span class="line"><span class="function">FILE *<span class="title">fdopen</span><span class="params">(<span class="keyword">int</span> df, <span class="keyword">const</span> <span class="keyword">char</span> *type)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>1.  fopen 函数用来打开一个指定路径的文件
+2.  freopen 在一个指定的流上打开一个指定的文件, 如果该流已经打开, 则先关闭该流.
+    若该流已经定向, 则使用freopen清除该定向.一般用来打开 标准输入/标准输出/标准错误
+3.  fdopen取一个已有的文件描述符,并使一个标准的IO流与该文件描述符相结合. 
+    该函数常用于由创建管道和网络通信通道函数返回的描述符.
+</code></pre><p><strong>type参数</strong> </p>
+<p><img src="/2019/02/14/APUE-阅读笔记-第五章-标准I-O库/./标准IO.png" alt="Alt text"></p>
+<pre><code>使用b来区分二进制文件或者文本文件
+当以读写打开一个文件时(type中+号), 具有以下限制
+1. 如果中间没有fflush, fseek, fsetpos或者rewind, 则在输出的后面不能直接跟随输入
+2. 如果中间没有fseek, fsetpos或者rewind, 或者一个输入操作没有到达文件尾端, 则在输入操作之后不能直接跟随输出
+</code></pre><p><img src="/2019/02/14/APUE-阅读笔记-第五章-标准I-O库/./标准IO2.png" alt="Alt text"></p>
+<pre><code>在指定w或者a类型来创建一个新文件时, 我们无法说明文件的访问权限位,默认rw-rw-rw-
+可以使用umask来限制这些权限.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fclose</span><span class="params">(FILE *fp)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>调用fclose关闭一个打开的流
+文件被关闭之前, 冲洗缓冲区中的输出数据, 缓冲区中的任何输入数据被丢失.
+如果标准IO已经为该流自动分配了一个缓冲区, 则释放该缓冲区
+当进程正常终止时, 所有带未写缓冲区的标准IO流都被冲洗, 所有打开的标准IO流都被关闭
+</code></pre><h3 id="5-6-读和写流"><a href="#5-6-读和写流" class="headerlink" title="5.6 读和写流"></a>5.6 读和写流</h3><pre><code>一旦打开了流, 可在三种不同类型的非格式化IO中进行选择, 对其进行读写操作
+1. 每次打开一个字符的I/O. 一次读或者写一个字符, 如果流是带缓冲的, 则标准IO函数处理所有缓冲
+2. 每次一行的IO. 如果想要一次读或者写一行, 则使用fgets和fputs.
+3. 直接IO, fread和fwrite支持这种类型的IO. 
+</code></pre><p><strong>输入函数</strong><br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getc</span><span class="params">(FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fgetc</span><span class="params">(FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getchar</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<pre><code>函数getchar等同于getc(stdin)
+getc可以被实现为宏, 而fgetc不可以被实现为宏, so
+1. getc的参数不能是具有副作用的表达式, 因为它可能被计算多次
+2. 因为fgetc一定是个函数, 所以可以得到地址. 这就允许建fgetc的地址作为一个参数传送给另一个函数
+3. 调用fgetc函数所需要的时间比getc要长, 因为调用函数所需的时间通常长于调用宏
+</code></pre><p><strong>出错函数</strong></p>
+<pre><code>无论是出错还是到达文件结尾, 这三个函数都返回同样的值. 必须调用ferror或者feof
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">ferror</span><span class="params">(FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">feof</span><span class="params">(FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">clearerr</span><span class="params">(FILE *fp)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>大多数实现中, 为每个流在FILE对象中维护了两个标志:
+1. 出错标志
+2. 文件结束标志
+
+可以调用clearerr清除这两个标志
+</code></pre><p><strong>压字符回流</strong></p>
+<pre><code>从流中读取出的字符, 可以调用ungetc函数将字符再压送回流中. 不能回送EOF.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">ungetc</span><span class="params">(<span class="keyword">int</span> c,FILE *fp)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>输出函数</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">putc</span><span class="params">(<span class="keyword">int</span> c,FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fputc</span><span class="params">(<span class="keyword">int</span> c,FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">putchar</span><span class="params">(<span class="keyword">int</span> c)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="5-7-每次一行I-O"><a href="#5-7-每次一行I-O" class="headerlink" title="5.7 每次一行I/O"></a>5.7 每次一行I/O</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">fgets</span><span class="params">(<span class="keyword">char</span> *<span class="keyword">restrict</span> buf, <span class="keyword">int</span> n, FILE *<span class="keyword">restrict</span> fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">gets</span><span class="params">(<span class="keyword">char</span> *buf)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>fgets, 必须指定缓冲区长度n. 该缓冲区总是以null结尾, 
+如果行数据大于n, 那么将返回一个不完整的行. 下次调用该函数, 会继续执行该行.
+
+gets是一个不推荐使用的函数. 可能造成缓冲区溢出, 写到缓冲区之后的存储空间中.
+另外, gets并不将换行符存储到缓冲区中.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fputs</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> str, FILE *<span class="keyword">restrict</span> fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">puts</span> <span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *str)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>函数fputs将一个以null字节终止的字符串写到指定的流, 尾端的终止符null不写出. 
+puts与fputs的区别是, 写到标准输出流, 且每次调用之后添加一个换行符到标准输出
+puts是安全的,但是也应该避免使用
+</code></pre><h3 id="5-8-标准I-O的效率"><a href="#5-8-标准I-O的效率" class="headerlink" title="5.8  标准I/O的效率"></a>5.8  标准I/O的效率</h3><pre><code>标准IO的效率并不比直接调用read和write函数慢很多.  标准IO的优点在于不用考虑缓冲及最大IO长度的选择
+</code></pre><h3 id="5-9-二进制I-O"><a href="#5-9-二进制I-O" class="headerlink" title="5.9 二进制I/O"></a>5.9 二进制I/O</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">size_t</span> <span class="title">fread</span><span class="params">(<span class="keyword">void</span> *<span class="keyword">restrict</span> ptr, <span class="keyword">size_t</span> size, <span class="keyword">size_t</span> nobj, FILE *<span class="keyword">restrict</span> fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">size_t</span> <span class="title">fwrite</span><span class="params">(<span class="keyword">const</span> <span class="keyword">void</span> *<span class="keyword">restrict</span> ptr, <span class="keyword">size_t</span> size, <span class="keyword">size_t</span> nobj, FILE *<span class="keyword">restrict</span> fp)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>size 是结构的长度, nobj为对象的个数.
+只能读同一系统上已写的数据, 不能读其他的系统中数据.
+</code></pre><h3 id="5-10-定位流"><a href="#5-10-定位流" class="headerlink" title="5.10 定位流"></a>5.10 定位流</h3><pre><code>三种方法可以用来定位标准I/O流. 
+1. ftell和fseek函数, 这两个函数都假定文件的位置可以存放在一个长整型中.
+2. ftello和fseeko函数, 文件的偏移量可以不必一定使用长整型. 他们使用off_t数据类型代替了长整型.
+3. fgetops和fsetops函数. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">long</span> <span class="title">ftell</span><span class="params">(FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fseek</span><span class="params">(FILE *fp, <span class="keyword">long</span> offset, <span class="keyword">int</span> whence)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">rewind</span><span class="params">(FILE *fp)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">off_t</span> <span class="title">ftello</span><span class="params">(FILE *fp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fseeko</span><span class="params">(FILE *fp, <span class="keyword">off_t</span> offset , <span class="keyword">int</span> whence)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fgetpos</span><span class="params">(FILE *<span class="keyword">restrict</span> fp, <span class="keyword">fpos_t</span> *<span class="keyword">restrict</span> pos)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fsetpos</span><span class="params">(FILE *fp, <span class="keyword">const</span> <span class="keyword">fpos_t</span> *pos)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>为了定位文本文件, whence一定是SEEK_SET, 并且offset只能是0或者ftell返回的值.
+</code></pre><h3 id="5-11-格式化I-O"><a href="#5-11-格式化I-O" class="headerlink" title="5.11 格式化I/O"></a>5.11 格式化I/O</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">printf</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fprintf</span><span class="params">(FILE *<span class="keyword">restrict</span> fp, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">dprintf</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sprintf</span><span class="params">(<span class="keyword">char</span> *<span class="keyword">restrict</span> buf, cosnt <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">snprintf</span><span class="params">(<span class="keyword">char</span> *<span class="keyword">restrict</span> buf, <span class="keyword">size_t</span> n,<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">scanf</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fscanf</span><span class="params">(FILE *<span class="keyword">restrict</span> fp, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sscanf</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> buf, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> format, ...)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>snprintf : 长度超过n都被丢弃.
+</code></pre><h3 id="5-12-实现细节"><a href="#5-12-实现细节" class="headerlink" title="5.12 实现细节"></a>5.12 实现细节</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fileno</span><span class="params">(FILE *fp)</span></span>; <span class="comment">// 通过文件指针获取文件描述符</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pr_stdio</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *, FILE *)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_unbuffered</span><span class="params">(FILE *)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_linebuffered</span><span class="params">(FILE *)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">buffer_size</span><span class="params">(FILE *)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    FILE *fp;</span><br><span class="line">    <span class="built_in">fputs</span>(<span class="string">"enter any character\n"</span>, <span class="built_in">stdout</span>);</span><br><span class="line">    <span class="keyword">if</span> (getchar() == EOF) &#123;</span><br><span class="line">        err_sys(<span class="string">"getchar error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">fputs</span>(<span class="string">"one line to standard error\n"</span>, <span class="built_in">stderr</span>);</span><br><span class="line">    pr_stdio(<span class="string">"stdin"</span>, <span class="built_in">stdin</span>);</span><br><span class="line">    pr_stdio(<span class="string">"stdout"</span>, <span class="built_in">stdout</span>);</span><br><span class="line">    pr_stdio(<span class="string">"stderr"</span>, <span class="built_in">stderr</span>);</span><br><span class="line">    <span class="keyword">if</span> ((fp = fopen(<span class="string">"/etc/passwd"</span>, <span class="string">"r"</span>)) == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"fopen error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (getc(fp) == EOF) &#123;</span><br><span class="line">        err_sys(<span class="string">"getc error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    pr_stdio(<span class="string">"/etc/passwd"</span>, fp);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pr_stdio</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name, FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"stream = %s, "</span>, name);</span><br><span class="line">    <span class="keyword">if</span> (is_unbuffered(fp)) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"unbuffered"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (is_linebuffered(fp)) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"line buffered"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"fully buffered"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">", buffer size = %d\n"</span>, buffer_size(fp));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> defined(_IO_UNBUFFERED)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_unbuffered</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_flags &amp; _IO_UNBUFFERED);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_linebuffered</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_flags &amp; _IO_LINE_BUF);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">buffer_size</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_IO_buf_end - fp-&gt;_IO_buf_base);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">elif</span> defined(__SNBF)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_unbuffered</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_flags &amp; __SNBF);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_linebuffered</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_flags &amp; __SLBF);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">buffer_size</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_bf._size);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">elif</span> defined(_IONBF)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> _LP64</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _flag __pad[4]</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _ptr __pad[1]</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _base __pad[2]</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_unbuffered</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_flags &amp; _IONBF);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">is_linebuffered</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_flags &amp; _IOLBF);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">buffer_size</span><span class="params">(FILE *fp)</span> </span>&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> _LP64</span></span><br><span class="line">    <span class="keyword">return</span> (fp-&gt;_base - fp-&gt;_ptr);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    <span class="keyword">return</span> BUFSIZ;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">error</span> unknown stdio implementation!</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="5-13-临时文件"><a href="#5-13-临时文件" class="headerlink" title="5.13 临时文件"></a>5.13 临时文件</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">tmpnam</span><span class="params">(<span class="keyword">char</span> *ptr)</span></span>;</span><br><span class="line"><span class="function">FILE *<span class="title">tmpfile</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>tmpnam函数产生一个与现有文件名不同的一个有效路径名字符串.(只产生一个字符串)
+如果传入的参数为NULL, 会将文件名存储在静态区, 如果传入的参数为至少是L_tmpnam个字符的数组, 返回该数组指针.
+tmpfile 创建一个临时二进制文件. 但是立即被删除. 看不到的...
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">mkdtemp</span><span class="params">(<span class="keyword">char</span> *<span class="keyword">template</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mkstemp</span><span class="params">(<span class="keyword">char</span> *<span class="keyword">template</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>mkdtemp 函数创建了一个目录, 该目录有一个唯一的名字. 权限为`rwx------ `
+mkstemp 函数创建了一个文件, 该文件有一个唯一的名字. 权限为`rw-------`
+名字是通过template字符串进行选择的. 这个字符串是后六位设置为XXXXXX的路径名.
+</code></pre><h3 id="5-14-内存流"><a href="#5-14-内存流" class="headerlink" title="5.14 内存流"></a>5.14 内存流</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function">FILE *<span class="title">fmemopen</span><span class="params">(<span class="keyword">void</span> *<span class="keyword">restrict</span> buf, <span class="keyword">size_t</span> size, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> type)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>内存流: 虽然仍使用FILE指针进行访问, 但其实并没有底层文件, 所有的IO都是通过在缓冲区与主存之间来回传送字节来完成的.
+fmemopen函数允许调用者提供缓冲区用于内存流. 如果buf参数为空, fmemopen函数分配size字节数的缓冲区, 这种情况下, 流关闭, 缓冲区关闭.
+type参数控制如何使用流...取值对应基于文件的标准I/O的type参数取值, 但其中有微小的差别.
+1.  无论何时以追加写方式打开内存流时, 当前文件的位置设置为缓冲区的第一个null字节.
+    如果缓冲区中不存在null字节, 则当前位置就设置为缓冲区结尾的后一个字节.
+    当流不是以追加写方式打开时, 当前位置设置为缓冲区的开始位置.
+2.  如果buf参数是一个null指针, 打开流进行读或者写都没有任何意义, 因为在这种情况下, 缓冲区是通过fmemopen进行分配的, 找不到缓冲区地址.
+3.  任何时候需要增加流缓冲区的数据量以及调用fclose,fflush,fseek, fseeko以及fsetpos时都会在当前位置写入一个null字节
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这个代码在Mac和Linux上执行的结果不一样...</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> BSZ 48</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    FILE *fp;</span><br><span class="line">    <span class="keyword">char</span> buf[BSZ];</span><br><span class="line">    <span class="built_in">memset</span>(buf, <span class="string">'a'</span>, BSZ - <span class="number">2</span>);</span><br><span class="line">    buf[BSZ - <span class="number">2</span>] = <span class="string">'\0'</span>;</span><br><span class="line">    buf[BSZ - <span class="number">1</span>] = <span class="string">'X'</span>;</span><br><span class="line">    <span class="keyword">if</span> ((fp = fmemopen(buf, BSZ, <span class="string">"w+"</span>)) == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"fmemopen failed"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"initial buffer contents: %s\n"</span>, buf);</span><br><span class="line">    <span class="built_in">fprintf</span>(fp, <span class="string">"hello, world"</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"before flush: %s\n"</span>, buf);</span><br><span class="line">    fflush(fp);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"after flush: %s\n"</span>, buf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"len of string in buf = %ld\n"</span>, (<span class="keyword">long</span>)<span class="built_in">strlen</span>(buf));</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memset</span>(buf, <span class="string">'b'</span>, BSZ - <span class="number">2</span>);</span><br><span class="line">    buf[BSZ - <span class="number">2</span>] = <span class="string">'\0'</span>;</span><br><span class="line">    buf[BSZ - <span class="number">1</span>] = <span class="string">'X'</span>;</span><br><span class="line">    <span class="built_in">fprintf</span>(fp, <span class="string">"hello, world"</span>);</span><br><span class="line">    fseek(fp, <span class="number">0</span>, SEEK_SET);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"after fseek: %s\n"</span>, buf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"len of string in buf = %ld\n"</span>, (<span class="keyword">long</span>)<span class="built_in">strlen</span>(buf));</span><br><span class="line"></span><br><span class="line">    <span class="built_in">memset</span>(buf, <span class="string">'c'</span>, BSZ - <span class="number">2</span>);</span><br><span class="line">    buf[BSZ - <span class="number">2</span>] = <span class="string">'\0'</span>;</span><br><span class="line">    buf[BSZ - <span class="number">1</span>] = <span class="string">'X'</span>;</span><br><span class="line">    <span class="built_in">fprintf</span>(fp, <span class="string">"hello, world"</span>);</span><br><span class="line">    fclose(fp);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"after fseek: %s\n"</span>, buf);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"len of string in buf = %ld\n"</span>, (<span class="keyword">long</span>)<span class="built_in">strlen</span>(buf));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function">FILE *<span class="title">open_memstream</span><span class="params">(<span class="keyword">char</span> **bufp, <span class="keyword">size_t</span> *sizep)</span></span>;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;wchar.h&gt;</span></span></span><br><span class="line"><span class="function">FILE *<span class="title">open_wmenstream</span><span class="params">(<span class="keyword">wchar_t</span> **bufp, <span class="keyword">size_t</span> *sizep)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>与fmemopen的区别是, 
+1. 创建的流只能写打开
+2. 不能指定自己的缓冲区. 通过bufp和sizep参数访问缓冲区地址和大小.
+3. 关闭流之后需要自行释放缓冲区
+4. 对流添加字节会增加缓冲区大小.
+</code></pre><p><strong>遵守的规则</strong></p>
+<pre><code>1. 缓冲区地址和长度只有在调用了fclose或者fflush后才有效
+2. 这些值只有在下一次流写入或调用fclose前才有效.(这地方是不是有问题啊...)
+</code></pre>
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/12/APUE-阅读笔记-第四章-文件和目录-第二部分/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/02/12/APUE-阅读笔记-第四章-文件和目录-第二部分/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">APUE 阅读笔记 第四章 文件和目录 第二部分</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-12 16:21:39" itemprop="dateCreated datePublished" datetime="2019-02-12T16:21:39+08:00">2019-02-12</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-02-19 17:42:28" itemprop="dateModified" datetime="2019-02-19T17:42:28+08:00">2019-02-19</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="第四章-文件和目录-第二部分"><a href="#第四章-文件和目录-第二部分" class="headerlink" title="第四章 文件和目录 第二部分"></a>第四章 文件和目录 第二部分</h2><h3 id="4-12-文件长度"><a href="#4-12-文件长度" class="headerlink" title="4.12 文件长度"></a>4.12 文件长度</h3><pre><code>stat结构成员st_size表示以字节为单位的文件的长度.
+此字段只对普通文件/目录文件/符号链接有意义
+对于符号链接, 文件长度实际上是文件名中的实际字符数
+</code></pre><p><strong>文件空洞</strong></p>
+<pre><code>关于文件空洞, 实际上是偏移量超过文件尾端, 并写入了数据造成的.
+(系统中的du报告的是512字节块的块数或者是1024字节块的块数)
+使用实用程序复制空洞文件, 文件空洞会被填满, 实际字节填为0
+</code></pre><h3 id="4-13-文件截断"><a href="#4-13-文件截断" class="headerlink" title="4.13 文件截断"></a>4.13 文件截断</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">truncate</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">off_t</span> length)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">ftruncate</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">off_t</span> length)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>有时我们需要在文件尾端截去一些数据以缩短文件. 
+将一个文件的长度阶段为0是一个特例, 在打开文件时使用O_TRUNC标志可以做到这一点.
+截断文件可以使用上面的两个文件
+如果之前的文件长度超过length, 那么超过length之后的文件内容不能被访问
+如果之前的文件长度少于length, 那么文件的长度将增加, 后面的是文件空洞
+</code></pre><h3 id="4-14-文件系统"><a href="#4-14-文件系统" class="headerlink" title="4.14 文件系统"></a>4.14 文件系统</h3><pre><code>可以把一个磁盘分成一个或者多个分区, 每个分区可以包含一个文件系统, 如下图
+节点是固定长度的记录项, 包含文件的绝大部分信息. 
+</code></pre><p><img src="/2019/02/12/APUE-阅读笔记-第四章-文件和目录-第二部分/./文件系统1.png" alt="Alt text"></p>
+<p><img src="/2019/02/12/APUE-阅读笔记-第四章-文件和目录-第二部分/./文件系统2.png" alt="Alt text"></p>
+<p><strong>引用计数</strong></p>
+<pre><code>如上图所示, 多个目录项指向一个i节点, 每个i节点中都有一个连接计数, 
+只有当连接计数减少至0时, 才可以删除该文件(释放文件占用的数据块)
+解除文件的连接并不意味着释放该文件占用的磁盘块
+stat结构中, 连接计数被保存在`st_nlink`中
+</code></pre><p><strong>符号链接</strong></p>
+<pre><code>符号链接文件的实际内容(在数据块中)包含了该符号连接所指向的文件的名字
+</code></pre><p><strong>i节点</strong></p>
+<pre><code>i节点存储文件的所有信息, 包含文件类型, 文件访问权限位, 文件长度和指向文件数据库的指针等.
+stat结构的大部分信息都取自i节点. 只有两项重要数据存放在目录项中: 文件名和i节点编号
+i节点编号的数据类型是ino_t
+</code></pre><p><strong>文件系统隔离</strong></p>
+<pre><code>因为目录项中的i节点编号指向同一文件系统中相应的i节点,
+一个目录项不能指向了另一个文件系统的i节点. 
+这就是为什么ln命令不能跨越文件系统的缘故
+</code></pre><p><strong>重命名文件</strong></p>
+<pre><code>当不更换文件系统的情况下问一个文件重命名时, 文件的实际内容并未移动. 
+只需要构造一个指向现有i节点的新目录项, 并删除老的目录项, 连接计数不会改变.
+</code></pre><p><img src="/2019/02/12/APUE-阅读笔记-第四章-文件和目录-第二部分/./文件重命名.png" alt="Alt text"></p>
+<p><strong>目录文件的连接计数</strong></p>
+<pre><code>编号2549的节点, 其类型字段标识它是一个目录, 连接计数为2. 
+任何一个叶子目录的连接计数总是2
+数值2来自命名该目录的目录项以及该目录中的.项
+</code></pre><hr>
+<pre><code>编号为1267的i节点, 其类型字段标识它是一个目录, 连接技术大于或者等于3.
+大于等于3的原因是: 至少有三个目录项指向它: 命名它的目录, 该目录中的.项, 还有其子目录中的..项
+</code></pre><h3 id="4-15-函数link-linkat-unlink-unlinkat和remove"><a href="#4-15-函数link-linkat-unlink-unlinkat和remove" class="headerlink" title="4.15 函数link, linkat, unlink, unlinkat和remove"></a>4.15 函数link, linkat, unlink, unlinkat和remove</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">link</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *existingpath, <span class="keyword">const</span> <span class="keyword">char</span> *newpath)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">linkat</span><span class="params">(<span class="keyword">int</span> efd, <span class="keyword">const</span> <span class="keyword">char</span> *existingpath, <span class="keyword">int</span> nfd, <span class="keyword">const</span> <span class="keyword">char</span> *newpath, <span class="keyword">int</span> flag)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">unlink</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">unlinkat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">int</span> flag)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>创建连接</strong></p>
+<pre><code>前两个函数创建一个新的目录项newpath, 它引用现有文件existingpath. 
+如果newpath已经存在, 则返回出错.
+只创建路径中的一个分量, 路径中的其他部分应当已经存在
+flag用来决定指向现有符号连接还是指向符号连接指向的文件
+创建目录项和增加引用计数应当是一个原子操作
+</code></pre><p><strong>删除连接</strong></p>
+<pre><code>后两个函数删除目录项, 并将由pathname所引用的文件的链接计数减一.
+为了解除对文件的连接, 必须对包含该目录的目录具有写和执行权限
+只有链接计数达到0 , 文件才可以删除. 进程打开了文件, 其内容也不能删除.
+关闭一个文件时, 内核首先检查打开该文件的进程个数, 如果这个计数达到0 , 再去检查其链接计数
+当flag参数设置了AT_REMOVEDIR标志时, 函数可以类似与rmdir那样删除目录.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (open(<span class="string">"foo"</span>, O_RDWR) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"open error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (unlink(<span class="string">"foo"</span>) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"unlink error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"file unlinked\n"</span>);</span><br><span class="line">    sleep(<span class="number">15</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"done"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>unlink这种特性用来保证即使是在程序崩溃时, 所创建的临时文件也不会被遗留下来.
+进程使用open或create创建一个文件, 立即unlink即可
+如果filepath是符号链接, 那么只能删除符号链接,而不能删除文件.
+没有一个函数能删除符号链接引用的文件
+</code></pre><h3 id="4-16-函数rename和renameat"><a href="#4-16-函数rename和renameat" class="headerlink" title="4.16 函数rename和renameat"></a>4.16 函数rename和renameat</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">rename</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *oldname, <span class="keyword">const</span> <span class="keyword">char</span> *newname)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">renameat</span><span class="params">(<span class="keyword">int</span> oldfd, <span class="keyword">const</span> <span class="keyword">char</span> *oldname, <span class="keyword">int</span> newfd, <span class="keyword">const</span> <span class="keyword">char</span> *newname)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>oldname是文件</strong></p>
+<pre><code>如果oldname是一个文件, 那么newname不能是一个已经存在的目录,
+如果newname已经存在,但不是目录, 则先将该目录项删除, 并将oldname命名为newname.
+</code></pre><p><strong>oldname是目录</strong></p>
+<pre><code>如果newname已经存在, 那么它必须是一个目录, 而且必须是一个空目录
+如果newname已经存在, 且是空目录, 先将其删除, 然后将old命名为newname
+且newname不能包含oldname作为其路径前缀, 例如将/usr/foo命名为/usr/foo/test
+</code></pre><p><strong>符号链接</strong></p>
+<pre><code>如果oldname或newname引用符号链接, 那么处理的是符号链接本身, 不影响引用的文件
+</code></pre><p><strong>./..</strong></p>
+<pre><code>不能对. / .. 重命名
+</code></pre><p><strong>同一文件</strong></p>
+<pre><code>如果oldname和newname引用同一文件, 那么函数不做任何更改就返回
+</code></pre><h3 id="4-17-符号链接"><a href="#4-17-符号链接" class="headerlink" title="4.17 符号链接"></a>4.17 符号链接</h3><pre><code>符号链接是一个文件的间接指针, 硬链接直接指向文件的i节点.
+引入符号链接是为了避免硬链接的一些限制
+1. 硬链接通常要求在同一个文件系统中
+2. 只有超级用户才能创建指向目录的硬链接
+一些函数不支持符号链接, 慎用
+</code></pre><h3 id="4-18-创建和读取符号链接"><a href="#4-18-创建和读取符号链接" class="headerlink" title="4.18 创建和读取符号链接"></a>4.18 创建和读取符号链接</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">symlink</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *actualpath, <span class="keyword">const</span> <span class="keyword">char</span> *sympath)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">symlinkat</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *actualpath, <span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *sympath)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">readlink</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, <span class="keyword">char</span> *<span class="keyword">restrict</span> buf, <span class="keyword">size_t</span> bufsize)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">readlinkat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, <span class="keyword">char</span> *<span class="keyword">restrict</span> buf, <span class="keyword">size_t</span> bufsize)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>读取</strong></p>
+<pre><code>创建一个纸箱actualpath的新目录项sympath
+在创建时, 并不要求actualpath存在.且两者并不需要位于同一文件系统中
+</code></pre><p><strong>读取</strong></p>
+<pre><code>两个函数组合了open, read, close的所有操作.
+如果函数成功执行, 返回读入buf的字节数.
+在buf中返回的符号链接内容并不以null字节终止
+</code></pre><h3 id="4-19-文件的时间"><a href="#4-19-文件的时间" class="headerlink" title="4.19 文件的时间"></a>4.19 文件的时间</h3><pre><code>对每个文件维护三个字段, 他们的意义如下
+</code></pre><table>
+<thead>
+<tr>
+<th style="text-align:left">字段</th>
+<th style="text-align:right">说明</th>
+<th style="text-align:right">例子</th>
+<th style="text-align:center">ls选项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">st_atim</td>
+<td style="text-align:right">文件数据的最后访问时间</td>
+<td style="text-align:right">read</td>
+<td style="text-align:center">-u</td>
+</tr>
+<tr>
+<td style="text-align:left">st_mtim</td>
+<td style="text-align:right">文件数据的最后修改时间</td>
+<td style="text-align:right">write</td>
+<td style="text-align:center">默认</td>
+</tr>
+<tr>
+<td style="text-align:left">st_ctim</td>
+<td style="text-align:right">i节点状态的最后更改时间</td>
+<td style="text-align:right">chown, chmode</td>
+<td style="text-align:center">-c</td>
+</tr>
+</tbody>
+</table>
+<pre><code>修改时间是文件内容最后一次被修改的时间
+状态更改时间是该文件的i节点最后一次被修改的时间.
+</code></pre><h3 id="4-20-函数futimens-utimensat-utimes"><a href="#4-20-函数futimens-utimensat-utimes" class="headerlink" title="4.20 函数futimens, utimensat, utimes"></a>4.20 函数futimens, utimensat, utimes</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">futimens</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> struct timespec times[<span class="number">2</span>])</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">utimensat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *path, <span class="keyword">const</span> struct timespec times[<span class="number">2</span>], <span class="keyword">int</span> flag)</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">utime</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">const</span> struct timeval times[<span class="number">2</span>])</span></span></span><br></pre></td></tr></table></figure>
+<p><strong>时间</strong></p>
+<pre><code>这两个函数的times数组的第一个元素包含访问时间, 第二元素包含修改时间. 是时间戳
+1. 如果times参数是一个空指针,则访问时间和修改时间两者都设置为当前时间
+2. 如果times参数指向两个timespec结构的数组, 任意数组元素的tv_nsec字段的值为UTIME_NOW,
+相应的时间戳设置为当前时间, 忽略相应的tv_sec字段
+3. 如果times参数指向两个timespec结构的数组, 任意数组元素的tv_nsec字段的值为UTIME_OMIT,
+相应的时间戳不变, 忽略tv_sec字段
+4. 如果times参数指向两个timespec结构的数组, tv_nsec的值既不是UTIME_NOW也不是UTIME_OMIT, 
+相应的时间设置为tv_sec和tv_nsec的值
+</code></pre><p><strong>权限</strong></p>
+<pre><code>1. 如果times参数是一个空指针, 或者任意数组元素的tv_nsec字段的值为UTIME_NOW,
+则进程的有效用户ID必须等于该文件的所有者ID, 进程必须对文件具有写权限,
+或者进程是一个超级用户进程
+2. 如果times参数是一个非空指针,
+并且任意tv_nsec字段的值都为既不是UTIME_OMIT又不是UTIME_NOW,
+则进程有效用户ID必须等于该文件的所有者ID, 或者进程必须是一个超级用户进程,
+对文件只有写权限是不够
+3. 如果times参数是一个非空指针, 并且任意tv_nsec字段的值都为UTIME_OMIT,
+就不执行任何权限检查
+</code></pre><hr>
+<pre><code>futimens 函数需要打开文件开更改它的时间,utimensat函数提供了一种使用文件名更改时间的方法.
+如果fd是AT_FDCWD, 那么通过当前进程的目录来计算filepath. 
+如果pathname是绝对路径, 那么fd将被忽略
+utimensat的flag参数来决定是否跟随符号链接
+</code></pre><p><strong>utimes</strong></p>
+<pre><code>utimes函数对路径名进行操作. times参数是指向包含两个时间戳元素(访问时间和修改时间)的数组的指针.
+我们不能对状态更改时间st_ctim指定一个值, 因为调用utimes函数时, 该状态会自动更新
+</code></pre><h3 id="4-21-函数mkdir-mkdirat-rmdir"><a href="#4-21-函数mkdir-mkdirat-rmdir" class="headerlink" title="4.21 函数mkdir, mkdirat, rmdir"></a>4.21 函数mkdir, mkdirat, rmdir</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mkdir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">mode_t</span> mode)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mkdirat</span> <span class="params">(<span class="keyword">int</span> fd,<span class="keyword">const</span> <span class="keyword">char</span> *pathname,<span class="keyword">mode_t</span> mode)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>这两个函数创建一个空目录, 其中.和..目录项是自动创建的.
+所指定的文件访问权限mode由进程的文件模式创建屏蔽字修改
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">rmdir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>用rmdir只能删除空目录.
+</code></pre><h3 id="4-22-读目录"><a href="#4-22-读目录" class="headerlink" title="4.22 读目录"></a>4.22 读目录</h3><pre><code>对目录具有访问权限的任意用户都可以读目录. 但是只有内核才能写目录. 
+一个目录的写权限位和执行权限位决定了在该目录中能否创建新文件
+</code></pre><h3 id="4-23-函数chdir-fchdir和getcwd"><a href="#4-23-函数chdir-fchdir和getcwd" class="headerlink" title="4.23 函数chdir, fchdir和getcwd"></a>4.23 函数chdir, fchdir和getcwd</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">chdir</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchdir</span><span class="params">(<span class="keyword">int</span> fd)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>每个进程都有当前工作目录, 此目录是搜索所有相对路径名的起点. 
+进程调用上面的两个函数来更改当前工作目录.
+只影响调用chdir的程序
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">getcwd</span><span class="params">(<span class="keyword">char</span> *buf, <span class="keyword">size_t</span> size)</span></span>; <span class="comment">// 参数为缓冲区的地址和缓冲区大小(该函数获取当前工作目录的绝对路径)</span></span><br></pre></td></tr></table></figure>
+<h3 id="4-24-设备特殊文件"><a href="#4-24-设备特殊文件" class="headerlink" title="4.24 设备特殊文件"></a>4.24 设备特殊文件</h3><h3 id="4-25-文件访问权限位小结"><a href="#4-25-文件访问权限位小结" class="headerlink" title="4.25 文件访问权限位小结"></a>4.25 文件访问权限位小结</h3><p><img src="/2019/02/12/APUE-阅读笔记-第四章-文件和目录-第二部分/./文件访问权限位.png" alt="Alt text"></p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/25/RSA-加密算法初探/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/01/25/RSA-加密算法初探/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">RSA 加密算法初探</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-01-25 20:39:12" itemprop="dateCreated datePublished" datetime="2019-01-25T20:39:12+08:00">2019-01-25</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-01-28 14:49:08" itemprop="dateModified" datetime="2019-01-28T14:49:08+08:00">2019-01-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/加密-签名-安全/" itemprop="url" rel="index"><span itemprop="name">加密/签名/安全</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="RSA-加密算法初探"><a href="#RSA-加密算法初探" class="headerlink" title="RSA 加密算法初探"></a>RSA 加密算法初探</h2><h3 id="1-公钥和私钥的产生"><a href="#1-公钥和私钥的产生" class="headerlink" title="1. 公钥和私钥的产生"></a>1. 公钥和私钥的产生</h3><pre><code>1. 随机选择两个大的素数p!=q, 计算N=p*q
+2. 根据欧拉函数, 求得 r=φ(N)=φ(p)φ(q)=(p-1)*(q-1)
+3. 选择一个小于r且与r互质的整数e, 并求得e关于r的模逆元, 命名为d. 即d*e%r=1
+4. 将p和q的记录销毁
+5. (N,e)是公钥, (N,d)是私钥
+</code></pre><p><strong>一些基础知识</strong></p>
+<pre><code>1. n的欧拉函数指的是1~n-1之间与n互质的数的个数
+2. 一个素数n的欧拉函数等于n-1
+3. (a^b)%p=(a^b%φ(p))%p
+</code></pre><h3 id="2-加密消息"><a href="#2-加密消息" class="headerlink" title="2. 加密消息"></a>2. 加密消息</h3><pre><code>1. 消息发送方知道公钥(N,e)
+2. 消息发送方将消息转化为小于N的非负整数n(比如可以将字转化为该字的Unicode码, 可以分几段, 然后将每一段转化为n)
+3. 用公式 c=n^e%N
+4. 将消息发送给消息接受者
+</code></pre><h3 id="3-解密消息"><a href="#3-解密消息" class="headerlink" title="3. 解密消息"></a>3. 解密消息</h3><pre><code>1. 消息接受者接收到消息, 拿到n
+2. 利用公式n=c^d%N来将c转化为n. (n = (c^d)%N = ((n^e)^d)%N = (n^(de%φ(N)))%N = (n^(de%r))%N = n%N = n)
+</code></pre><h3 id="4-签名消息"><a href="#4-签名消息" class="headerlink" title="4. 签名消息"></a>4. 签名消息</h3><p><strong>发送者</strong></p>
+<pre><code>1. 计算消息的散列值(MD5,sha1)
+2. 加密散列值, 并将加密后的散列值(签名)加在消息后面.
+3. 发送消息
+</code></pre><p><strong>接受者</strong></p>
+<pre><code>1. 接受消息
+2. 使用公钥解密这个散列值
+3. 计算消息的散列值, 比较两个散列值是否相同. 
+</code></pre><p><strong>意义</strong></p>
+<pre><code>签名消息可以保证消息在传递过程中没有被伪造, 也没有人篡改消息
+加密/解密消息可以保证消息在传递过程中不会被他人获取
+其实公钥和私钥都能用来加密和解密(理论上是如此, 毕竟逆元是相互的, 但不知安全上是否有影响), 但一定有一个不公开...
+</code></pre><h3 id="5-安全"><a href="#5-安全" class="headerlink" title="5. 安全"></a>5. 安全</h3><pre><code>公钥(N,e)是公开的, 加密消息c可能被获取. 但是想解密还需要私钥, 虽然可以通过N分解出pq来算出私钥, 
+但至今为止还没有人找到一个多项式时间的算法来分解一个大的整数的因子，同时也还没有人能够证明这种算法不存在
+目前认为N足够大, 黑客就没办法了.
+当前推荐N的长度至少为2048位
+</code></pre><ul>
+<li>以上信息摘自<a href="https://zh.wikipedia.org/wiki/RSA%E5%8A%A0%E5%AF%86%E6%BC%94%E7%AE%97%E6%B3%95" target="_blank" rel="noopener">维基百科</a></li>
+</ul>
+<hr>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/23/阿里云消息服务MNS-EndPoint签名认证-Golang/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/01/23/阿里云消息服务MNS-EndPoint签名认证-Golang/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">阿里云消息服务MNS EndPoint签名认证 Golang</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-01-23 15:06:11 / 修改时间：15:49:46" itemprop="dateCreated datePublished" datetime="2019-01-23T15:06:11+08:00">2019-01-23</time>
+            
+
+            
+              
+
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/加密-签名-安全/" itemprop="url" rel="index"><span itemprop="name">加密/签名/安全</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="阿里云消息服务MNS-EndPoint签名认证-Golang"><a href="#阿里云消息服务MNS-EndPoint签名认证-Golang" class="headerlink" title="阿里云消息服务MNS EndPoint签名认证 Golang"></a>阿里云消息服务MNS EndPoint签名认证 Golang</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>公司业务, 需要进行媒体转码服务, 转码之后需要接受阿里云的回调, 我们采用<a href="https://help.aliyun.com/document_detail/44602.html?spm=a2c4g.11186623.6.628.7b4840d6n7oJN6" target="_blank" rel="noopener">主题通知方式接受消息</a><br>此时需要为阿里云提供一个暴露在公网上面的接口, 所以要避免非法的攻击调用. 此时使用阿里的<a href="https://help.aliyun.com/document_detail/27488.html?spm=a2c4g.11186623.2.11.663d440bGv2Qab" target="_blank" rel="noopener">EndPoint签名认证</a><br>文档中已经有Java代码是如何进行验证的, 我在这里只是做了个转换. </p>
+<h3 id="思路"><a href="#思路" class="headerlink" title="思路"></a>思路</h3><ul>
+<li>从x-mns-signing-cert-url中取出base64加密后的url, 解密, 获得url</li>
+<li>http请求url获取pem证书, 解析证书, 获取<strong>公钥</strong></li>
+<li>从header中获取<strong>待签名的字符串</strong></li>
+<li>从header中获取加密后的Authorization, 解密, 获得<strong>待验证的签名</strong></li>
+<li>sha1对<strong>待签名的字符串</strong>sha1加密, 进行sha1rsa签名, 与<strong>待验证的签名</strong>对比</li>
+</ul>
+<h3 id="Java代码"><a href="#Java代码" class="headerlink" title="Java代码"></a>Java代码</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SignDemo</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> Boolean <span class="title">authenticate</span><span class="params">(String method, String uri, Map&lt;String, String&gt; headers)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">//获取证书的URL</span></span><br><span class="line">            <span class="keyword">if</span> (!headers.containsKey(<span class="string">"x-mns-signing-cert-url"</span>)) &#123;</span><br><span class="line">                System.out.println(<span class="string">"x-mns-signing-cert-url Header not found"</span>);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            String cert = headers.get(<span class="string">"x-mns-signing-cert-url"</span>);</span><br><span class="line">            <span class="keyword">if</span> (cert.isEmpty()) &#123;</span><br><span class="line">                System.out.println(<span class="string">"x-mns-signing-cert-url empty"</span>);</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            cert = <span class="keyword">new</span> String(Base64.decodeBase64(cert));</span><br><span class="line">            System.out.println(<span class="string">"x-mns-signing-cert-url:\t"</span> + cert);</span><br><span class="line">            <span class="comment">//根据URL获取证书，并从证书中获取公钥</span></span><br><span class="line">            URL url = <span class="keyword">new</span> URL(cert);</span><br><span class="line">            HttpURLConnection conn = (HttpURLConnection) url.openConnection();</span><br><span class="line">            DataInputStream in = <span class="keyword">new</span> DataInputStream(conn.getInputStream());</span><br><span class="line">            CertificateFactory cf = CertificateFactory.getInstance(<span class="string">"X.509"</span>);</span><br><span class="line">            Certificate c = cf.generateCertificate(in);</span><br><span class="line">            PublicKey pk = c.getPublicKey();</span><br><span class="line">            <span class="comment">//获取待签名字符串</span></span><br><span class="line">            String str2sign = getSignStr(method, uri, headers);</span><br><span class="line">            System.out.println(<span class="string">"String2Sign:\t"</span> + str2sign);</span><br><span class="line">            <span class="comment">//对Authorization字段做Base64解码</span></span><br><span class="line">            String signature = headers.get(<span class="string">"Authorization"</span>);</span><br><span class="line">            <span class="keyword">byte</span>[] decodedSign = Base64.decodeBase64(signature);</span><br><span class="line">            <span class="comment">//认证</span></span><br><span class="line">            java.security.Signature signetcheck = java.security.Signature.getInstance(<span class="string">"SHA1withRSA"</span>);</span><br><span class="line">            signetcheck.initVerify(pk);</span><br><span class="line">            signetcheck.update(str2sign.getBytes());</span><br><span class="line">            Boolean res = signetcheck.verify(decodedSign);</span><br><span class="line">            <span class="keyword">return</span> res;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> String <span class="title">getSignStr</span><span class="params">(String method, String uri, Map&lt;String, String&gt; headers)</span> </span>&#123;</span><br><span class="line">        StringBuilder sb = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">        sb.append(method);</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        sb.append(safeGetHeader(headers, <span class="string">"Content-md5"</span>));</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        sb.append(safeGetHeader(headers, <span class="string">"Content-Type"</span>));</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        sb.append(safeGetHeader(headers, <span class="string">"Date"</span>));</span><br><span class="line">        sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        List&lt;String&gt; tmp = <span class="keyword">new</span> ArrayList&lt;String&gt;();</span><br><span class="line">        <span class="keyword">for</span> (Map.Entry&lt;String, String&gt; entry : headers.entrySet()) &#123;</span><br><span class="line">            <span class="keyword">if</span> (entry.getKey().startsWith(<span class="string">"x-mns-"</span>)) &#123;</span><br><span class="line">                tmp.add(entry.getKey() + <span class="string">":"</span> + entry.getValue());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        Collections.sort(tmp);</span><br><span class="line">        <span class="keyword">for</span> (String kv : tmp) &#123;</span><br><span class="line">            sb.append(kv);</span><br><span class="line">            sb.append(<span class="string">"\n"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        sb.append(uri);</span><br><span class="line">        <span class="keyword">return</span> sb.toString();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> String <span class="title">safeGetHeader</span><span class="params">(Map&lt;String, String&gt; headers, String name)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (headers.containsKey(name)) &#123;</span><br><span class="line">            <span class="keyword">return</span> headers.get(name);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="string">""</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        SignDemo sd = <span class="keyword">new</span> SignDemo();</span><br><span class="line">        Map&lt;String, String&gt; headers = <span class="keyword">new</span> HashMap&lt;String, String&gt;();</span><br><span class="line">        headers.put(<span class="string">"Authorization"</span>, <span class="string">"Mko2Azg9fhCw8qR6G7AeAFMyzjO9qn7LDA5/t9E+6X5XURXTqBUuhpK+K55UNhrnlE2UdDkRrwDxsaDP5ajQdg=="</span>);</span><br><span class="line">        headers.put(<span class="string">"Content-md5"</span>, <span class="string">"M2ViOTE2ZDEyOTlkODBjMjVkNzM4YjNhNWI3ZWQ1M2E="</span>);</span><br><span class="line">        headers.put(<span class="string">"Content-Type"</span>, <span class="string">"text/xml;charset=utf-8"</span>);</span><br><span class="line">        headers.put(<span class="string">"Date"</span>, <span class="string">"Tue, 23 Feb 2016 09:41:06 GMT"</span>);</span><br><span class="line">        headers.put(<span class="string">"x-mns-request-id"</span>, <span class="string">"56CC2932F0E3D5BD530685CB"</span>);</span><br><span class="line">        headers.put(<span class="string">"x-mns-signing-cert-url"</span>, <span class="string">"aHR0cDovL21uc3Rlc3Qub3NzLWNuLWhhbmd6aG91LmFsaXl1bmNzLmNvbS94NTA5X3B1YmxpY19jZXJ0aWZpY2F0ZS5wZW0="</span>);</span><br><span class="line">        headers.put(<span class="string">"x-mns-version"</span>, <span class="string">"2015-06-06"</span>);</span><br><span class="line">        Boolean res = sd.authenticate(<span class="string">"POST"</span>, <span class="string">"/notifications"</span>, headers);</span><br><span class="line">        System.out.println(<span class="string">"Authenticate result:"</span> + res);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Golang代码"><a href="#Golang代码" class="headerlink" title="Golang代码"></a>Golang代码</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"crypto"</span></span><br><span class="line">	<span class="string">"crypto/rsa"</span></span><br><span class="line">	<span class="string">"crypto/sha1"</span></span><br><span class="line">	<span class="string">"crypto/x509"</span></span><br><span class="line">	<span class="string">"encoding/base64"</span></span><br><span class="line">	<span class="string">"encoding/pem"</span></span><br><span class="line">	<span class="string">"errors"</span></span><br><span class="line">	<span class="string">"io/ioutil"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"net/http"</span></span><br><span class="line">	<span class="string">"sort"</span></span><br><span class="line">	<span class="string">"strings"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">AliNotification</span><span class="params">(method <span class="keyword">string</span>, uri <span class="keyword">string</span>, header http.Header)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="comment">// 提取url , 获取证书, 解析出公钥</span></span><br><span class="line">	urlBase64 := header.Get(<span class="string">"x-mns-signing-cert-url"</span>)</span><br><span class="line">	<span class="keyword">if</span> urlBase64 == <span class="string">""</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"x-mns-signing-cert-url Header not found"</span>)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"x-mns-signing-cert-url Header not found"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	body, err := base64.StdEncoding.DecodeString(urlBase64)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"解码失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"解码失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	certUrl := <span class="keyword">string</span>(body)</span><br><span class="line">	log.Println(<span class="string">"x-mns-signing-cert-url:\t"</span>, certUrl)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 请求url, 获得证书</span></span><br><span class="line">	resp, err := http.Get(certUrl)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"请求x-mns-signing-cert-url失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"请求x-mns-signing-cert-url失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">defer</span> resp.Body.Close()</span><br><span class="line">	body, err = ioutil.ReadAll(resp.Body)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"解析x-mns-signing-cert-url失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"解析x-mns-signing-cert-url失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 解析证书</span></span><br><span class="line">	p, rest := pem.Decode(body)</span><br><span class="line">	<span class="keyword">if</span> p == <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"获取公钥失败"</span>, <span class="keyword">string</span>(rest))</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"获取公钥失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	cert, err := x509.ParseCertificate(p.Bytes)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"证书文件格式不合法, 解析失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"证书文件格式不合法, 解析失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	publicKey, ok := cert.PublicKey.(*rsa.PublicKey)</span><br><span class="line">	<span class="keyword">if</span> ok == <span class="literal">false</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"公钥格式不正确"</span>)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"公钥格式不正确"</span>)</span><br><span class="line">	&#125;</span><br><span class="line">	log.Println(cert.PublicKey)</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 获取待签名字符串</span></span><br><span class="line">	str := <span class="string">""</span></span><br><span class="line">	str = str + method + <span class="string">"\n"</span></span><br><span class="line">	str = str + header.Get(<span class="string">"Content-md5"</span>) + <span class="string">"\n"</span></span><br><span class="line">	str = str + header.Get(<span class="string">"Content-Type"</span>) + <span class="string">"\n"</span></span><br><span class="line">	str = str + header.Get(<span class="string">"Date"</span>) + <span class="string">"\n"</span></span><br><span class="line">	<span class="keyword">var</span> arr sort.StringSlice</span><br><span class="line">	<span class="keyword">for</span> k, v := <span class="keyword">range</span> header &#123;</span><br><span class="line">		<span class="comment">// golang 的header.Set方法会将header里面key的首字母大写, 所以还要转换一下, 好傻</span></span><br><span class="line">		k = strings.ToLower(k)</span><br><span class="line">		<span class="keyword">if</span> strings.HasPrefix(k, <span class="string">"x-mns-"</span>) &amp;&amp; <span class="built_in">len</span>(v) != <span class="number">0</span> &#123;</span><br><span class="line">			arr = <span class="built_in">append</span>(arr, k+<span class="string">":"</span>+v[<span class="number">0</span>])</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	sort.Sort(arr)</span><br><span class="line">	<span class="keyword">for</span> i := <span class="keyword">range</span> arr &#123;</span><br><span class="line">		str = str + arr[i] + <span class="string">"\n"</span></span><br><span class="line">	&#125;</span><br><span class="line">	str += uri</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 对Authorization字段做Base64解码</span></span><br><span class="line">	signature := header.Get(<span class="string">"Authorization"</span>)</span><br><span class="line">	decodeSign, err := base64.StdEncoding.DecodeString(signature)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"解码失败"</span>, err)</span><br><span class="line">		<span class="keyword">return</span> errors.New(<span class="string">"解码失败"</span>)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	log.Println(<span class="string">"String2Sign:\t"</span> + str)</span><br><span class="line"></span><br><span class="line">	hashed := sha1.Sum([]<span class="keyword">byte</span>(str))</span><br><span class="line"></span><br><span class="line">	<span class="comment">// 认证</span></span><br><span class="line">	<span class="keyword">return</span> rsa.VerifyPKCS1v15(publicKey, crypto.SHA1, hashed[<span class="number">0</span>:sha1.Size], decodeSign)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	header := <span class="built_in">make</span>(http.Header)</span><br><span class="line">	header.Set(<span class="string">"Authorization"</span>, <span class="string">"Mko2Azg9fhCw8qR6G7AeAFMyzjO9qn7LDA5/t9E+6X5XURXTqBUuhpK+K55UNhrnlE2UdDkRrwDxsaDP5ajQdg=="</span>)</span><br><span class="line">	header.Set(<span class="string">"Content-md5"</span>, <span class="string">"M2ViOTE2ZDEyOTlkODBjMjVkNzM4YjNhNWI3ZWQ1M2E="</span>)</span><br><span class="line">	header.Set(<span class="string">"Content-Type"</span>, <span class="string">"text/xml;charset=utf-8"</span>)</span><br><span class="line">	header.Set(<span class="string">"Date"</span>, <span class="string">"Tue, 23 Feb 2016 09:41:06 GMT"</span>)</span><br><span class="line">	header.Set(<span class="string">"x-mns-request-id"</span>, <span class="string">"56CC2932F0E3D5BD530685CB"</span>)</span><br><span class="line">	header.Set(<span class="string">"x-mns-signing-cert-url"</span>, <span class="string">"aHR0cDovL21uc3Rlc3Qub3NzLWNuLWhhbmd6aG91LmFsaXl1bmNzLmNvbS94NTA5X3B1YmxpY19jZXJ0aWZpY2F0ZS5wZW0="</span>)</span><br><span class="line">	header.Set(<span class="string">"x-mns-version"</span>, <span class="string">"2015-06-06"</span>)</span><br><span class="line">	log.Println(AliNotification(<span class="string">"POST"</span>, <span class="string">"/notifications"</span>, header))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/21/APUE-阅读笔记-第四章-文件和目录-第一部分/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/01/21/APUE-阅读笔记-第四章-文件和目录-第一部分/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">APUE 阅读笔记 第四章 文件和目录 第一部分</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-01-21 23:10:23" itemprop="dateCreated datePublished" datetime="2019-01-21T23:10:23+08:00">2019-01-21</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2019-01-25 20:36:38" itemprop="dateModified" datetime="2019-01-25T20:36:38+08:00">2019-01-25</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <pre><code>周六写的东西, 忘了发. 周日躺尸一天, 今天比较忙...... 未更新, 发布周六学习的内容
+</code></pre><h2 id="第四章-文件和目录-第一部分"><a href="#第四章-文件和目录-第一部分" class="headerlink" title="第四章 文件和目录 第一部分"></a>第四章 文件和目录 第一部分</h2><h3 id="4-1-引言"><a href="#4-1-引言" class="headerlink" title="4.1 引言"></a>4.1 引言</h3><pre><code>1. 本章描述文件系统的其他特征和文件的性质
+2. 了解文件的所有属性
+3. 说明修改这个属性的各个函数
+4. Unix文件系统的结构以及符号链接
+5. 对目录进行操作的各个函数
+6. 以降序便利目录层次结构的函数
+</code></pre><h3 id="4-2-函数stat-fstat-fstatat-和lstat"><a href="#4-2-函数stat-fstat-fstatat-和lstat" class="headerlink" title="4.2 函数stat, fstat, fstatat, 和lstat"></a>4.2 函数stat, fstat, fstatat, 和lstat</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">stat</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, struct stat* <span class="keyword">restrict</span> buf)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fstat</span><span class="params">(<span class="keyword">int</span> fd, struct stat *buf)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">lstat</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, struct stat * <span class="keyword">restrict</span> buf)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fstatat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *<span class="keyword">restrict</span> pathname, struct stat *<span class="keyword">restrict</span> buf, <span class="keyword">int</span> flag)</span></span>;</span><br><span class="line"><span class="comment">// 关于restrict: C语言中的一种类型限定符（Type Qualifiers），用于告诉编译器，</span></span><br><span class="line"><span class="comment">// 对象已经被指针所引用，不能通过除该指针外所有其他直接或间接的方式修改该对象的内容。</span></span><br></pre></td></tr></table></figure>
+<p><strong>区别</strong></p>
+<pre><code>stat函数返回与命名文件相关的信息结构
+fstat函数获得已在描述符fd上打开文件的有关信息
+lstat函数类似于stat, 但当命名文件是一个符号链接时,返回该链接信息, 而不是该链接指向的文件的信息
+fstatat 函数为一个相对于当前打开目录(由fd指向)的路径名返回文件统计信息. 
+</code></pre><p><strong>fstatat的flag</strong></p>
+<pre><code>flag参数控制着是否跟随一个符号链接
+AT_SYMLINK_NOFOLLOW标志被设置时, 不跟随.
+否则跟随
+如果fd参数的值AT_FDCWD, 
+    1. pathname是相对路径, fstatat会计算对于当前目录的pathname参数.
+    2. pathname是绝对路径, fd参数就会被忽略
+</code></pre><p><strong>buf</strong></p>
+<pre><code>函数通过填充buf来返回信息
+</code></pre><h3 id="4-3-文件类型"><a href="#4-3-文件类型" class="headerlink" title="4.3 文件类型"></a>4.3 文件类型</h3><p><strong>普通文件</strong></p>
+<pre><code>包含某种形式的数据. 
+普通文本和二进制数据都是普通文件, 对Linux内核而言并无区别.
+二进制可执行文件有特定的格式, 便于内核解析执行
+</code></pre><p><strong>目录文件</strong></p>
+<pre><code>包含其他文件的名字和指向这些文件有关信息的指针.
+只有内核可以直接写目录文件, 进程必须使用函数来能更改目录
+</code></pre><p><strong>块特殊文件</strong></p>
+<pre><code>提供对设备带缓冲的访问, 每次访问以固定长度为单位进行
+</code></pre><p><strong>字符特殊文件</strong></p>
+<pre><code>提供对设备不带缓冲的访问,长度可变.
+系统中的设备要么是字符特殊文件, 要么是块特殊文件
+</code></pre><p><strong>FIFO</strong></p>
+<pre><code>这种类型的文件用于进程间通信. 有时称之为命名管道
+</code></pre><p><strong>套接字</strong></p>
+<pre><code>用于进程间的网络通信, 也可用于一台主机进程之间的进程之间通信
+</code></pre><p><strong>符号链接</strong></p>
+<pre><code>用于指向另一个文件
+文件类型信息存储在stat结构中的st_mode成员中. 
+使用以下宏判断是文件类型
+    1. S_ISBLK(m)       block special
+    2. S_ISCHR(m)       char special
+    3. S_ISDIR(m)       directory
+    4. S_ISFIFO(m)    fifo or socket
+    5. S_ISREG(m)       regular file
+    6. S_ISLNK(m)       symbolic link
+    7. S_ISSOCK(m)    socket
+    8. S_TYPEISMQ(buf)        Test for a message queue
+    9. S_TYPEISSEM(buf)    Test for a semaphore
+    10. S_TYPEISSHM(buf)    Test for a shared memory object
+</code></pre><h3 id="4-4-设置用户ID和设置组ID"><a href="#4-4-设置用户ID和设置组ID" class="headerlink" title="4.4 设置用户ID和设置组ID"></a>4.4 设置用户ID和设置组ID</h3><p><strong>与进程相关联的ID</strong></p>
+<pre><code>1. 标识我们是谁
+    - 实际用户ID
+    - 实际组ID
+2. 决定我们的文件的访问属性
+    - 有效用户ID
+    - 有效组ID
+    - 附属组ID
+3. 由exec函数保存
+    - 保存的设置用户ID
+    - 保存的设置组ID
+
+
+通常, 进程的有效用户ID就是实际用户ID, 有效组ID通常是实际组ID
+但是可以设置st_mode一个特殊标志, 含义是:
+当执行此文件时, 进程的(有效用户ID/有效组ID)为文件所有者的(用户ID/组ID). `设置用户ID/组ID`
+通过这种方式, 可以使普通用户获得root权限.
+若文件所有者是超级用户, 并且设置了该文件的设置用户ID, 
+那么当该程序文件由一个进程执行时, 该进程具有超级用户权限
+</code></pre><p><strong>设置需谨慎</strong></p>
+<pre><code>设置用户ID和设置组ID都包含在st_mode值中, 可以分别用s__ISUID和S_ISGID设置
+</code></pre><h3 id="4-5-文件访问权限"><a href="#4-5-文件访问权限" class="headerlink" title="4.5 文件访问权限"></a>4.5 文件访问权限</h3><pre><code>st_mode值中包含了对文件(所有类型的文件)的访问权限位. 
+每个文件有9个权限位: 
+    1. 用户读/写/执行
+    2. 组读/写/执行
+    3. 其他读/写/执行
+</code></pre><hr>
+<p><strong>规则</strong></p>
+<pre><code>1. 用任意名字打开任意类型的文件时, 需要对从文件所在的目录 -&gt; 根目录的所有目录都具有执行权限. 读权限允许我们读目录,获得在该目录下所有文件的列表.
+2. 对一个文件的读权限决定了是否能够对当前文件进行读操作
+3. 对一个文件的写权限决定了是否能够对当前文件进行写操作
+4. 打开文件设置O_TRUNC必须对该文件具有写权限
+5. 为了在目录中创建一个新文件, 必须对该目录具有执行权限和写权限
+6. 为了删除一个现有的文件, 需要对目录具有写文件和执行权限, 对该文件本身不需要读写权限
+7. 如果用7个exec函数中的任意一个执行某个文件, 必须对该文件有可执行权限, 文件必须是普通文件
+</code></pre><hr>
+<p><strong>权限检测</strong></p>
+<pre><code>1. 检查进程的有效用户ID是否为0,
+2. 进程的有效用户ID等于文件的所有者ID
+3. 进程的有效组ID或进程的附属组ID等于文件的组ID
+4. 其他用户
+</code></pre><h3 id="4-6-新文件和目录的所有权"><a href="#4-6-新文件和目录的所有权" class="headerlink" title="4.6 新文件和目录的所有权"></a>4.6 新文件和目录的所有权</h3><pre><code>1. 新文件的用户ID设置为进程的有效用户ID. 
+2. 新文件的组ID可以使进程的有效组ID
+3. 新文件的组ID可以是它所在目录的组ID
+</code></pre><h3 id="4-7-函数access和faccessat"><a href="#4-7-函数access和faccessat" class="headerlink" title="4.7 函数access和faccessat"></a>4.7 函数access和faccessat</h3><pre><code>当open函数打开一个文件时, 内核以进程的有效用户ID和有效组ID为基础执行其访问测试权限
+但是, 有时进程也希望按实际用户ID和实际组ID来测试其访问功能.
+access和faccessat函数就是满足这种需求的
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">access</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">int</span> mode)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">faccessat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">int</span> mode, <span class="keyword">int</span> flag)</span></span>;</span><br><span class="line"><span class="comment">//成功返回0, 失败返回-1</span></span><br></pre></td></tr></table></figure>
+<p><strong>mode</strong></p>
+<pre><code>测试文件是否存在 F_OK
+测试读权限 R_OK
+测试写权限 W_OK
+测试执行权限 X_OK
+</code></pre><p><strong>异同</strong></p>
+<pre><code>faccessat 函数和access函数在下面两种情况下是相同的.
+1. pathname参数为绝对路径, 
+2. fd参数取值为AT_FDCWD而pathname为相对路径
+</code></pre><p><strong>flag</strong></p>
+<pre><code>flag参数可以用以改变faccessat的行为, 如果flag设置为AT_EACCESS ,
+访问检查用的是调用进程的有效用户ID和有效组ID, 而不是实际用户ID和实际组ID
+</code></pre><h3 id="4-8-函数umask"><a href="#4-8-函数umask" class="headerlink" title="4.8 函数umask"></a>4.8 函数umask</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">mode_t</span> <span class="title">umask</span><span class="params">(<span class="keyword">mode_t</span> cmask)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>umask函数为进程设置文件模式创建屏蔽字, 并返回之前的值
+其中cmask是4.5中9个常量中的若干按位或构成的
+在文件模式创建屏蔽字中为1的位, 文件中相应的为一定被关闭
+测试代码如下:
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    umask(<span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (creat(<span class="string">"foo"</span>, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"creat error for foo"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    umask(S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);</span><br><span class="line">    <span class="keyword">if</span> (creat(<span class="string">"bar"</span>, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"creat error for bar"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行之后, 发现foo是拥有rw-rw-rw-的权限的<br>但是umask屏蔽了<code>S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH</code> bar只有rw——-的权限</p>
+<h3 id="4-9-函数chmod-fchmod-fchmodat"><a href="#4-9-函数chmod-fchmod-fchmodat" class="headerlink" title="4.9 函数chmod, fchmod, fchmodat"></a>4.9 函数chmod, fchmod, fchmodat</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">chmod</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">mode_t</span> mode)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchmode</span><span class="params">(<span class="keyword">int</span> fd,<span class="keyword">mode_t</span> mode)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchmodeat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">mode_t</span> mode,<span class="keyword">int</span> flag)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>chmod 在指定的文件上操作, fchmod在打开的文件上操作, 
+fchmodat函数与chmod函数在下面两种情况下是相同的:
+1. pathname参数是绝对路径, 
+2. fd参数取值为AT_FDCWD, 而pathname为相对路径
+flag参数可以改变fchmodeat的行为,当设置了AT_SYMLINK_NOFOLLOW标志时, fchmodeat并不会跟随符号链接
+chmod只是更改i节点最近一次被修改的时间, ls -l列出的是最后修改文件内容的时间
+</code></pre><p><strong>新增标志位</strong></p>
+<pre><code>1. 执行时设置用户ID S_ISUID
+2. 执行时设置组ID S_ISGID
+3. 保存正文(粘着位) S_ISVTX
+4. S_IRWXU  用户读写执行
+5. S_IRWXG  组读写执行
+6. S_IRWXO  其他读写执行
+</code></pre><h3 id="4-10-粘着位"><a href="#4-10-粘着位" class="headerlink" title="4.10 粘着位"></a>4.10 粘着位</h3><pre><code>如果一个可执行文件的这一位被设置了, 那么当该程序第一次被执行, 
+在其终止时, 程序正文部分(机器指令)的一个副本仍被保存在交换区.
+使得下一次执行该程序时能够较快的将其装载入内存.
+现在的系统扩展了粘着位的适用范围, Single Unix Specification允许针对目录设置粘着位.
+如果对一个目录设置了粘着位, 只有对该目录具有写权限的用户且满足下列条件之一,
+才能`删除`或者`重命名`该目录下的文件(但是可以新建文件呀)
+1. 拥有该文件
+2. 拥有此目录
+3. 是超级用户
+</code></pre><h3 id="4-11-函数chown-fchown-fchownat和lchown"><a href="#4-11-函数chown-fchown-fchownat和lchown" class="headerlink" title="4.11 函数chown, fchown, fchownat和lchown"></a>4.11 函数chown, fchown, fchownat和lchown</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">chown</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">uid_t</span> owner, <span class="keyword">gid_t</span> group)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchown</span><span class="params">(<span class="keyword">int</span> fd, uid_towner, <span class="keyword">gid_t</span> group)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fchownat</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">uid_t</span> owner, <span class="keyword">gid_t</span> group, <span class="keyword">int</span> flag)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">lchown</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">uid_t</span> owner, <span class="keyword">gid_t</span> group)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>他们的区别主要在于绝对路径与相对路径, 或者是改变符号链接或者符号链接指向的文件的所有者
+</code></pre>
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/17/APUE-阅读笔记-第三章-文件I-O/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1098,573 +2906,11 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/08/15/AMQP帧结构/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/default.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="flyfish's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2018/08/15/AMQP帧结构/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">AMQP帧结构</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2018-08-15 21:00:01" itemprop="dateCreated datePublished" datetime="2018-08-15T21:00:01+08:00">2018-08-15</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2019-01-18 22:36:09" itemprop="dateModified" datetime="2019-01-18T22:36:09+08:00">2019-01-18</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/RabbitMQ/" itemprop="url" rel="index"><span itemprop="name">RabbitMQ</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="AMQP帧结构"><a href="#AMQP帧结构" class="headerlink" title="AMQP帧结构"></a>AMQP帧结构</h3><ul>
-<li>帧类型</li>
-<li>信道编号</li>
-<li>以字节为单位的帧大小</li>
-<li>帧有效载荷</li>
-<li>结束字节标记</li>
-</ul>
-<p><img src="/2018/08/15/AMQP帧结构/./377.png" alt></p>
-<h3 id="帧类型"><a href="#帧类型" class="headerlink" title="帧类型"></a>帧类型</h3><ul>
-<li>协议头帧用于连接到rabbitmq,仅使用一次</li>
-<li>方法帧携带发送给rabbitmq或从rabbitmq接收到的rpc请求或响应</li>
-<li>内容头帧包含一条消息的大小和属性</li>
-<li>消息体帧包含消息的内容</li>
-<li>心跳帧在客户端与rabbitmq中进行传递,作为一种校验机制确保连接的两端都可用并且在正常工作</li>
-</ul>
-<h3 id="帧大小"><a href="#帧大小" class="headerlink" title="帧大小"></a>帧大小</h3><pre><code>amqp的帧有一个上限,如果消息体超过这个上限,消息内容将被拆分成多个消息体帧
-方法帧和内容头帧中的数据是打包好的二进制数据,但消息体帧中的是未经处理的原消息内容
-</code></pre><h3 id="方法帧结构"><a href="#方法帧结构" class="headerlink" title="方法帧结构"></a>方法帧结构</h3><pre><code>[帧类型][信道编号][帧大小][方法帧][结束字节标记]
-[方法帧]=&gt;[basic][publish][交换器名称][路由键值][mandatory标志]
-方法帧中包含请求所需的类,方法以及相关参数
-</code></pre><h3 id="内容头帧"><a href="#内容头帧" class="headerlink" title="内容头帧"></a>内容头帧</h3><pre><code>[帧类型][信道编号][帧大小][内容头帧][结束字节标记]
-[内容头帧]=&gt;[消息体大小][标志值][消息的内容属性][app_id][...][投递模式]
-这里面的东西是Basic.Propertics的内容
-</code></pre><h3 id="消息体帧"><a href="#消息体帧" class="headerlink" title="消息体帧"></a>消息体帧</h3><pre><code>[帧类型][信道编号][帧大小][消息体帧][结束字节标记]
-[消息体帧]=&gt;[消息体]
-</code></pre>
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-       
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/07/24/Centos安装最新版RabbitMQ/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/default.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="flyfish's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2018/07/24/Centos安装最新版RabbitMQ/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">Centos安装最新版RabbitMQ</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2018-07-24 01:57:01" itemprop="dateCreated datePublished" datetime="2018-07-24T01:57:01+08:00">2018-07-24</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2018-11-20 20:30:44" itemprop="dateModified" datetime="2018-11-20T20:30:44+08:00">2018-11-20</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/软件安装/" itemprop="url" rel="index"><span itemprop="name">软件安装</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h3 id="Centos安装最新版RabbitMQ"><a href="#Centos安装最新版RabbitMQ" class="headerlink" title="Centos安装最新版RabbitMQ"></a>Centos安装最新版RabbitMQ</h3><ol>
-<li><p>安装依赖</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">sudo yum update</span><br><span class="line">sudo yum install epel-release</span><br><span class="line">sudo yum install unixODBC unixODBC-devel wxBase wxGTK SDL wxGTK-gl</span><br><span class="line">sudo yum install socat.x86_64</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>从<a href="https://bintray.com/rabbitmq/rpm/erlang/21.0.3-1" target="_blank" rel="noopener">这里</a>下载erlang安装软件<strong>不能从erlang官网下载,否则安装RabbitMQ出错</strong></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https://bintray.com/rabbitmq/rpm/download_file?file_path=erlang/21/el/7/x86_64/erlang-21.0.3-1.el7.centos.x86_64.rpm</span><br><span class="line">sudo rpm -ivh erlang-21.0.3-1.el7.centos.x86_64.rpm</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>下载安装RabbitMQ</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">wget https://dl.bintray.com/rabbitmq/all/rabbitmq-server/3.7.7/rabbitmq-server-3.7.7-1.el7.noarch.rpm</span><br><span class="line">sudo rpm -ivh rabbitmq-server-3.7.7-1.el7.noarch.rpm</span><br></pre></td></tr></table></figure>
-</li>
-</ol>
-<h3 id="RabbitMQ-基础命令"><a href="#RabbitMQ-基础命令" class="headerlink" title="RabbitMQ 基础命令"></a>RabbitMQ 基础命令</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">启动RabbitMQ    rabbitmq-server -detached</span><br><span class="line">添加用户        rabbitmqctl add_user root password</span><br><span class="line">添加权限        rabbitmqctl set_permissions -p / root <span class="string">".*"</span> <span class="string">".*"</span> <span class="string">".*"</span></span><br><span class="line">设置管理员      rabbitmqctl set_user_tags root administrator</span><br><span class="line">启用web管理     rabbitmq-plugins <span class="built_in">enable</span> rabbitmq_management</span><br><span class="line">查看插件列表    rabbitmq-plugins list</span><br></pre></td></tr></table></figure>
-<h3 id="搭建RabbitMQ集群"><a href="#搭建RabbitMQ集群" class="headerlink" title="搭建RabbitMQ集群"></a>搭建RabbitMQ集群</h3><h4 id="单机多节点"><a href="#单机多节点" class="headerlink" title="单机多节点"></a>单机多节点</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">启动多节点</span><br><span class="line"></span><br><span class="line">第一个节点:</span><br><span class="line">RABBITMQ_NODE_PORT=5681 RABBITMQ_NODENAME=rabbit1 RABBITMQ_SERVER_START_ARGS=<span class="string">"-rabbitmq_management listener [&#123;port,15681&#125;]"</span> rabbitmq-server -detached</span><br><span class="line"></span><br><span class="line">第二个节点</span><br><span class="line">RABBITMQ_NODE_PORT=5682 RABBITMQ_NODENAME=rabbit2 RABBITMQ_SERVER_START_ARGS=<span class="string">"-rabbitmq_management listener [&#123;port,15682&#125;]"</span> rabbitmq-server -detached</span><br><span class="line"></span><br><span class="line">第三个节点</span><br><span class="line">RABBITMQ_NODE_PORT=5683 RABBITMQ_NODENAME=rabbit3 RABBITMQ_SERVER_START_ARGS=<span class="string">"-rabbitmq_management listener [&#123;port,15683&#125;]"</span> rabbitmq-server -detached</span><br><span class="line"></span><br><span class="line">将节点添加到集群</span><br><span class="line">节点1</span><br><span class="line">rabbitmqctl -n rabbit1 stop_app</span><br><span class="line">rabbitmqctl -n rabbit1 reset</span><br><span class="line">rabbitmqctl -n rabbit1 join_cluster rabbit</span><br><span class="line">rabbitmqctl -n rabbit1 start_app</span><br><span class="line"></span><br><span class="line">节点2</span><br><span class="line">rabbitmqctl -n rabbit2 stop_app</span><br><span class="line">rabbitmqctl -n rabbit2 reset</span><br><span class="line">rabbitmqctl -n rabbit2 join_cluster rabbit</span><br><span class="line">rabbitmqctl -n rabbit2 start_app</span><br><span class="line"></span><br><span class="line">节点3</span><br><span class="line">rabbitmqctl -n rabbit3 stop_app</span><br><span class="line">rabbitmqctl -n rabbit3 reset</span><br><span class="line">rabbitmqctl -n rabbit3 join_cluster rabbit</span><br><span class="line">rabbitmqctl -n rabbit3 start_app</span><br><span class="line"></span><br><span class="line">还有节点rabbit,实际上相当于四个节点</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">查看节点信息</span><br><span class="line">rabbitmqctl -n rabbit cluster_status</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-       
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/02/08/mysql命令行连接工具-mycli/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/images/default.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="flyfish's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2018/02/08/mysql命令行连接工具-mycli/" class="post-title-link" itemprop="http://yoursite.com/page/3/index.html">mysql命令行连接工具: mycli</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2018-02-08 10:25:33" itemprop="dateCreated datePublished" datetime="2018-02-08T10:25:33+08:00">2018-02-08</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2018-11-20 20:17:51" itemprop="dateModified" datetime="2018-11-20T20:17:51+08:00">2018-11-20</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/软件安装/" itemprop="url" rel="index"><span itemprop="name">软件安装</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="mycli介绍"><a href="#mycli介绍" class="headerlink" title="mycli介绍"></a>mycli介绍</h2><pre><code>mycli是MySQL的一个命令行连接工具，有自动补全，有语法高亮。
-项目地址: [mycli][1]
-官网地址: [mycli官网][2]
-借用官网的一张图：
-</code></pre><p><img src="http://d33wubrfki0l68.cloudfront.net/0f0733732e766219aa0a83e631d5cd8b784edabc/5dc57/images/main.gif" alt></p>
-<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="Python-Package"><a href="#Python-Package" class="headerlink" title="Python Package:"></a>Python Package:</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pip install mycli</span><br><span class="line">or</span><br><span class="line">easy_install mycli</span><br></pre></td></tr></table></figure>
-<h3 id="macOS"><a href="#macOS" class="headerlink" title="macOS"></a>macOS</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install mycli</span><br></pre></td></tr></table></figure>
-<h3 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Debian/Ubuntu Package:</span></span><br><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get install mycli</span><br><span class="line"><span class="comment">## Fedora</span></span><br><span class="line">sudo dnf install mycli</span><br><span class="line"><span class="comment">## RHEL, Centos:</span></span><br><span class="line">sudo yum install python-pip python-devel</span><br><span class="line">sudo pip install mycli</span><br></pre></td></tr></table></figure>
-<h2 id="在Ubuntu上面安装出错"><a href="#在Ubuntu上面安装出错" class="headerlink" title="在Ubuntu上面安装出错"></a>在Ubuntu上面安装出错</h2><h3 id="出错信息"><a href="#出错信息" class="headerlink" title="出错信息:"></a>出错信息:</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@VM-173-98-ubuntu:~$ pip install mycli</span><br><span class="line">Downloading/unpacking mycli</span><br><span class="line">  Downloading mycli-1.16.0-py2.py3-none-any.whl (54kB): 54kB downloaded</span><br><span class="line">Downloading/unpacking click&gt;=4.1 (from mycli)</span><br><span class="line">  Downloading click-6.7-py2.py3-none-any.whl (71kB): 71kB downloaded</span><br><span class="line">Downloading/unpacking cli-helpers[styles]&gt;=1.0.1 (from mycli)</span><br><span class="line">  Downloading cli_helpers-1.0.1-py2-none-any.whl</span><br><span class="line">Downloading/unpacking sqlparse&gt;=0.2.2,&lt;0.3.0 (from mycli)</span><br><span class="line">  Downloading sqlparse-0.2.4-py2.py3-none-any.whl</span><br><span class="line">Downloading/unpacking configobj&gt;=5.0.5 (from mycli)</span><br><span class="line">  Downloading configobj-5.0.6.tar.gz</span><br><span class="line">  Running setup.py (path:/tmp/pip_build_ubuntu/configobj/setup.py) egg_info <span class="keyword">for</span> package configobj</span><br><span class="line"></span><br><span class="line">Downloading/unpacking PyMySQL&gt;=0.6.7 (from mycli)</span><br><span class="line">  Downloading PyMySQL-0.8.0-py2.py3-none-any.whl (83kB): 83kB downloaded</span><br><span class="line">Downloading/unpacking cryptography&gt;=1.0.0 (from mycli)</span><br><span class="line">  Downloading cryptography-2.1.4.tar.gz (441kB): 441kB downloaded</span><br><span class="line">  Running setup.py (path:/tmp/pip_build_ubuntu/cryptography/setup.py) egg_info <span class="keyword">for</span> package cryptography</span><br><span class="line">    error <span class="keyword">in</span> cryptography setup <span class="built_in">command</span>: Invalid environment marker: python_version &lt; <span class="string">'3'</span></span><br><span class="line">    Complete output from <span class="built_in">command</span> python setup.py egg_info:</span><br><span class="line">    error <span class="keyword">in</span> cryptography setup <span class="built_in">command</span>: Invalid environment marker: python_version &lt; <span class="string">'3'</span></span><br><span class="line"></span><br><span class="line">----------------------------------------</span><br><span class="line">Cleaning up...</span><br><span class="line">Command python setup.py egg_info failed with error code 1 <span class="keyword">in</span> /tmp/pip_build_ubuntu/cryptography</span><br><span class="line">Storing debug <span class="built_in">log</span> <span class="keyword">for</span> failure <span class="keyword">in</span> /home/ubuntu/.pip/pip.log</span><br></pre></td></tr></table></figure>
-<h3 id="pip-log"><a href="#pip-log" class="headerlink" title="pip.log"></a>pip.log</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Exception:</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/dist-packages/pip/basecommand.py"</span>, line 122, <span class="keyword">in</span> main</span><br><span class="line">    status = self.run(options, args)</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/dist-packages/pip/commands/install.py"</span>, line 283, <span class="keyword">in</span> run</span><br><span class="line">    requirement_set.install(install_options, global_options, root=options.root_path)</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/dist-packages/pip/req.py"</span>, line 1436, <span class="keyword">in</span> install</span><br><span class="line">    requirement.install(install_options, global_options, *args, **kwargs)</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/dist-packages/pip/req.py"</span>, line 672, <span class="keyword">in</span> install</span><br><span class="line">    self.move_wheel_files(self.source_dir, root=root)</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/dist-packages/pip/req.py"</span>, line 902, <span class="keyword">in</span> move_wheel_files</span><br><span class="line">    pycompile=self.pycompile,</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/dist-packages/pip/wheel.py"</span>, line 206, <span class="keyword">in</span> move_wheel_files</span><br><span class="line">    clobber(<span class="built_in">source</span>, lib_dir, True)</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/dist-packages/pip/wheel.py"</span>, line 193, <span class="keyword">in</span> clobber</span><br><span class="line">    os.makedirs(destsubdir)</span><br><span class="line">  File <span class="string">"/usr/lib/python2.7/os.py"</span>, line 157, <span class="keyword">in</span> makedirs</span><br><span class="line">    mkdir(name, mode)</span><br><span class="line">OSError: [Errno 13] Permission denied: <span class="string">'/usr/local/lib/python2.7/dist-packages/pip'</span></span><br></pre></td></tr></table></figure>
-<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">没加sudo权限🤦‍</span><br><span class="line">pip install mycli就OK了。。</span><br></pre></td></tr></table></figure>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-       
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span>
+    <a class="extend prev" rel="prev" href="/page/2/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/4/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1709,7 +2955,7 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">26</span>
+                    <span class="site-state-item-count">33</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -1738,7 +2984,9 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
                     
                       
                     
-                    <span class="site-state-item-count">8</span>
+                      
+                    
+                    <span class="site-state-item-count">9</span>
                     <span class="site-state-item-name">分类</span>
                   </a>
                 </div>
@@ -1787,7 +3035,19 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
                     
                       
                     
-                    <span class="site-state-item-count">18</span>
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">24</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

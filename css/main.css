@@ -186,7 +186,7 @@ th {
 body {
   position: relative;
   font-family: 'Noto Serif SC', "PingFang SC", "Microsoft YaHei", sans-serif;
-  font-size: 16px;
+  font-size: 12px;
   line-height: 2;
   color: #555;
   background: #fff;
@@ -203,7 +203,7 @@ body {
 }
 @media (min-width: 1200px) {
   body {
-    font-size: 18px;
+    font-size: 14px;
   }
 }
 h1,
@@ -1256,7 +1256,7 @@ pre .javascript .function {
 .post-body .figure .caption {
   margin: -20px auto 15px;
   text-align: center;
-  font-size: 16px;
+  font-size: 12px;
   color: #999;
   font-weight: bold;
   line-height: 1;
@@ -1803,7 +1803,7 @@ pre .javascript .function {
   text-align: center;
   color: inherit;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 14px;
 }
 .site-state-item-name {
   font-size: 13px;
@@ -1851,7 +1851,7 @@ pre .javascript .function {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #9d3387;
+  background: #619c37;
 }
 .links-of-blogroll {
   font-size: 13px;
@@ -2498,7 +2498,7 @@ ul.breadcrumb {
   margin: 1em 0;
   padding: 0 2em;
   text-align: center;
-  font-size: 14px;
+  font-size: 10px;
 }
 ul.breadcrumb li {
   display: inline;

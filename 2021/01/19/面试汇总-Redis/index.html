@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+
+  
+    
+      
+    
+
+    
+  
+
+  
+    
+    
+    <link href="https://fonts.loli.net/css?family=Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|Noto Serif SC:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=6.5.0" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=6.5.0">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=6.5.0">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=6.5.0" color="#222">
+
+
+
+
+
+
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    version: '6.5.0',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Redis 知识点一. 数据结构1. 简单动态字符串 常数复杂度获取字符串长度 杜绝缓冲区溢出 减少修改字符串时带来的内存重分配次数 空间预分配: 在需要扩容的条件下，如果内容长度小于1M，那么空闲空间的长度等于内容长度，否则，空闲空间的长度为1M 惰性空间释放: 通过API释放空间   二进制安全 兼容部分C字符串函数  2. 链表 双端：链表节点带有prev和next指针，获取某个节点的前置节">
+<meta name="keywords" content="Redis,面试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="面试汇总-Redis">
+<meta property="og:url" content="http://yoursite.com/2021/01/19/面试汇总-Redis/index.html">
+<meta property="og:site_name" content="flyfish&#39;s blog">
+<meta property="og:description" content="Redis 知识点一. 数据结构1. 简单动态字符串 常数复杂度获取字符串长度 杜绝缓冲区溢出 减少修改字符串时带来的内存重分配次数 空间预分配: 在需要扩容的条件下，如果内容长度小于1M，那么空闲空间的长度等于内容长度，否则，空闲空间的长度为1M 惰性空间释放: 通过API释放空间   二进制安全 兼容部分C字符串函数  2. 链表 双端：链表节点带有prev和next指针，获取某个节点的前置节">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="http://yoursite.com/2021/01/19/面试汇总-Redis/72f547f18dbac788c7d11yy167d7ebf8.jpg">
+<meta property="og:image" content="http://yoursite.com/2021/01/19/面试汇总-Redis/403c2ab725dca8d44439f8994959af45.jpg">
+<meta property="og:updated_time" content="2021-02-28T09:22:31.958Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="面试汇总-Redis">
+<meta name="twitter:description" content="Redis 知识点一. 数据结构1. 简单动态字符串 常数复杂度获取字符串长度 杜绝缓冲区溢出 减少修改字符串时带来的内存重分配次数 空间预分配: 在需要扩容的条件下，如果内容长度小于1M，那么空闲空间的长度等于内容长度，否则，空闲空间的长度为1M 惰性空间释放: 通过API释放空间   二进制安全 兼容部分C字符串函数  2. 链表 双端：链表节点带有prev和next指针，获取某个节点的前置节">
+<meta name="twitter:image" content="http://yoursite.com/2021/01/19/面试汇总-Redis/72f547f18dbac788c7d11yy167d7ebf8.jpg">
+
+
+
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/01/19/面试汇总-Redis/">
+
+
+
+<script type="text/javascript" id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>面试汇总-Redis | flyfish's blog</title>
+  
+
+
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style type="text/css">
+    .use-motion .motion-element,
+    .use-motion .brand,
+    .use-motion .menu-item,
+    .sidebar-inner,
+    .use-motion .post-block,
+    .use-motion .pagination,
+    .use-motion .comments,
+    .use-motion .post-header,
+    .use-motion .post-body,
+    .use-motion .collection-title { opacity: initial; }
+
+    .use-motion .logo,
+    .use-motion .site-title,
+    .use-motion .site-subtitle {
+      opacity: initial;
+      top: initial;
+    }
+
+    .use-motion {
+      .logo-line-before i { left: initial; }
+      .logo-line-after i { right: initial; }
+    }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title"><i class="fa fa-bookmark-o"></i>&nbsp;flyfish's blog</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-schedule">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/have-fun.html" rel="section"><i class="menu-item-icon fa fa-fw fa-calendar"></i> <br>元素周期表</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+    
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/01/19/面试汇总-Redis/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">面试汇总-Redis
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2021-01-19 08:59:28" itemprop="dateCreated datePublished" datetime="2021-01-19T08:59:28+08:00">2021-01-19</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-02-28 17:22:31" itemprop="dateModified" datetime="2021-02-28T17:22:31+08:00">2021-02-28</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/面试/" itemprop="url" rel="index"><span itemprop="name">面试</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Redis-知识点"><a href="#Redis-知识点" class="headerlink" title="Redis 知识点"></a>Redis 知识点</h1><h2 id="一-数据结构"><a href="#一-数据结构" class="headerlink" title="一. 数据结构"></a>一. 数据结构</h2><h3 id="1-简单动态字符串"><a href="#1-简单动态字符串" class="headerlink" title="1. 简单动态字符串"></a>1. 简单动态字符串</h3><ol>
+<li>常数复杂度获取字符串长度</li>
+<li>杜绝缓冲区溢出</li>
+<li>减少修改字符串时带来的内存重分配次数<ul>
+<li>空间预分配: 在需要扩容的条件下，如果内容长度小于1M，那么空闲空间的长度等于内容长度，否则，空闲空间的长度为1M</li>
+<li>惰性空间释放: 通过API释放空间</li>
+</ul>
+</li>
+<li>二进制安全</li>
+<li>兼容部分C字符串函数</li>
+</ol>
+<h3 id="2-链表"><a href="#2-链表" class="headerlink" title="2. 链表"></a>2. 链表</h3><ol>
+<li>双端：链表节点带有prev和next指针，获取某个节点的前置节点和后置节点的复杂度都是O（1）。</li>
+<li>无环：表头节点的prev指针和表尾节点的next指针都指向NULL，对链表的访问以NULL为终点。</li>
+<li>带表头指针和表尾指针：通过list结构的head指针和tail指针，程序获取链表的表头节点和表尾节点的复杂度为O（1）。</li>
+<li>带链表长度计数器：程序使用list结构的len属性来对list持有的链表节点进行计数，程序获取链表中节点数量的复杂度为O（1）。</li>
+<li>多态：链表节点使用void*指针来保存节点值，并且可以通过list结构的dup、free、match三个属性为节点值设置类型特定函数，所以链表可以用于保存各种不同类型的值。</li>
+</ol>
+<h3 id="3-字典"><a href="#3-字典" class="headerlink" title="3. 字典"></a>3. 字典</h3><blockquote>
+<p>当一个哈希键包含的键值对比较多，又或者键值对中的元素都是比较长的字符串时，Redis就会使用字典作为哈希键的底层实现。<br>负载因子: 元素数量/桶数量</p>
+</blockquote>
+<p>哈希表执行rehash的步骤如下：</p>
+<ol>
+<li>为字典的ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>哈希表分配空间，这个哈希表的空间大小取决于要执行的操作，以及ht[0]当前包含的键值对数量（也即是ht[0].used属性的值）：<ul>
+<li>如果执行的是扩展操作，那么ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>的大小为第一个大于等于ht[0].used*2的2 n（2的n次方幂）;</li>
+<li>如果执行的是收缩操作，那么ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>的大小为第一个大于等于ht[0].used的2 n。</li>
+</ul>
+</li>
+<li>将保存在ht[0]中的所有键值对rehash到ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>上面：rehash指的是重新计算键的哈希值和索引值，然后将键值对放置到ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>哈希表的指定位置上。</li>
+<li>当ht[0]包含的所有键值对都迁移到了ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>之后（ht[0]变为空表），释放ht[0]，将ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>设置为ht[0]，并在ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a>新创建一个空白哈希表，为下一次rehash做准备。</li>
+</ol>
+<p>扩展的条件: </p>
+<ol>
+<li>服务器目前没有在执行BGSAVE命令或者BGREWRITEAOF命令，并且哈希表的负载因子大于等于<code>1</code>。</li>
+<li>服务器目前正在执行BGSAVE命令或者BGREWRITEAOF命令，并且哈希表的负载因子大于等于<code>5</code>。</li>
+</ol>
+<p>收缩的条件: </p>
+<ul>
+<li>当哈希表的负载因子小于<code>0.1</code>时，程序自动开始对哈希表执行收缩操作。</li>
+</ul>
+<p>渐进式rehash: 每次对字典执行添加、删除、查找或者更新操作时，程序除了执行指定的操作以外，还会顺带将ht[0]哈希表在rehashidx索引上的所有键值对rehash到ht<a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">1</a></p>
+<h3 id="4-跳跃表"><a href="#4-跳跃表" class="headerlink" title="4. 跳跃表"></a>4. 跳跃表</h3><blockquote>
+<p>每个节点由<code>元素</code>, <code>分数</code>, <code>指向上一个节点的指针</code>, <code>各个层</code>组成</p>
+</blockquote>
+<ol>
+<li>新增:</li>
+<li>删除:</li>
+<li>查找: </li>
+</ol>
+<h3 id="5-整数集合"><a href="#5-整数集合" class="headerlink" title="5. 整数集合"></a>5. 整数集合</h3><blockquote>
+<p>包含编码方式, 元素数量, 保存元素的数组等. 其中元素从小到达有序排列.<br>其中插入和删除的复杂度都是O(N)</p>
+</blockquote>
+<p>整数集合的升级: </p>
+<ol>
+<li>扩容: 根据新元素的类型，扩展整数集合底层数组的空间大小，并为新元素分配空间。</li>
+<li>转换: 将底层数组现有的所有元素都转换成与新元素相同的类型，并将类型转换后的元素放置到正确的位上，而且在放置元素的过程中，需要继续维持底层数组的有序性质不变。</li>
+<li>插入: 将新元素添加到底层数组里面</li>
+</ol>
+<h3 id="6-压缩列表"><a href="#6-压缩列表" class="headerlink" title="6. 压缩列表"></a>6. 压缩列表</h3><blockquote>
+<p>特殊编码的连续内存块组成的顺序型数据结构. 查询时的复杂度为O(n)或者O(n^2)</p>
+</blockquote>
+<ol>
+<li>zlbytes: 记录压缩列表占用的总字节数</li>
+<li>zltail: 记录尾节点距离首节点的偏移量</li>
+<li>zllen: 记录节点数量</li>
+<li>entry: 列表节点<ul>
+<li>previous_entry_length: 记录压缩列表前一个节点的长度</li>
+<li>encoding: 节点的数据类型及长度, 最高两位保存编码, 后面的保存长度</li>
+<li>content: 保存节点的值.</li>
+</ul>
+</li>
+<li>zlend: 压缩列表末尾</li>
+</ol>
+<h2 id="二-对象"><a href="#二-对象" class="headerlink" title="二. 对象"></a>二. 对象</h2><h3 id="1-字符串对象"><a href="#1-字符串对象" class="headerlink" title="1. 字符串对象"></a>1. 字符串对象</h3><ul>
+<li>整数值, 且可以用long类型来保存, 那么编码为int</li>
+<li>字符串值, 长度大于32字节, raw方式, 将使用sds来保存</li>
+<li>其他, embstr<ul>
+<li>只需要一次内存分配, raw两次(一次sds的, 一次对象的. )</li>
+<li>只需要一次内存释放</li>
+<li>都保存在一块连续的内存里面, 能更好的利用缓存的优势</li>
+</ul>
+</li>
+</ul>
+<p>编码转换: </p>
+<ol>
+<li>int 升级为 raw</li>
+<li>所有对embstr的修改都会升级为raw</li>
+</ol>
+<h3 id="2-列表对象"><a href="#2-列表对象" class="headerlink" title="2. 列表对象"></a>2. 列表对象</h3><ul>
+<li>压缩列表实现: 所有字符串元素都小于64字节, 元素数量小于512个</li>
+<li>链表实现: 其他场景使用链表. </li>
+</ul>
+<h3 id="3-哈希对象"><a href="#3-哈希对象" class="headerlink" title="3. 哈希对象"></a>3. 哈希对象</h3><ul>
+<li>压缩列表实现: 先将保存了键的压缩列表节点推入到压缩列表尾, 再将保存了值的压缩列表节点推入压缩列表尾.<ul>
+<li>所有键值对的键和值的字符串长度都小于64字节</li>
+<li>哈希对象保存的键值对数量小于512个.</li>
+</ul>
+</li>
+<li>字典实现: 其他场景都使用字典实现. </li>
+</ul>
+<h3 id="4-集合对象"><a href="#4-集合对象" class="headerlink" title="4. 集合对象"></a>4. 集合对象</h3><ul>
+<li>整数集合实现<ul>
+<li>都是整数值</li>
+<li>元素个数小于512个</li>
+</ul>
+</li>
+<li>hashtable实现</li>
+</ul>
+<h3 id="5-有序集合对象"><a href="#5-有序集合对象" class="headerlink" title="5. 有序集合对象"></a>5. 有序集合对象</h3><ul>
+<li>压缩列表实现<ul>
+<li>均小于64字节</li>
+<li>元素个数小于128个.</li>
+</ul>
+</li>
+<li>跳跃表实现: 同时使用字典和跳跃表, 同时保留范围操作的优势和单个查询的优势.</li>
+</ul>
+<h2 id="三-Q-amp-A"><a href="#三-Q-amp-A" class="headerlink" title="三. Q&amp;A"></a>三. Q&amp;A</h2><h3 id="1-为什么Redis使用跳跃表不使用红黑树"><a href="#1-为什么Redis使用跳跃表不使用红黑树" class="headerlink" title="1. 为什么Redis使用跳跃表不使用红黑树"></a>1. 为什么Redis使用跳跃表不使用红黑树</h3><ol>
+<li>跳跃表范围查询效率高</li>
+<li>实现简单, 更加灵活</li>
+</ol>
+<h3 id="2-为什么Redis快"><a href="#2-为什么Redis快" class="headerlink" title="2. 为什么Redis快"></a>2. 为什么Redis快</h3><ol>
+<li>是内存数据库, 都在内存中进行操作</li>
+<li>采用了高效的数据结构</li>
+<li>采用了多路复用机制，使其在网络 IO 操作中能并发处理大量的客户端请求，实现高吞吐率</li>
+<li>单线程操作, 避免CPU线程切换的代价</li>
+</ol>
+<h3 id="3-Redis的持久化机制-灾备"><a href="#3-Redis的持久化机制-灾备" class="headerlink" title="3. Redis的持久化机制(灾备)"></a>3. Redis的持久化机制(灾备)</h3><h4 id="3-1-RDB快照持久化"><a href="#3-1-RDB快照持久化" class="headerlink" title="3.1 RDB快照持久化"></a>3.1 RDB快照持久化</h4><p>触发时机如下</p>
+<ol>
+<li>执行save(阻塞主线程) 或者 bgsave(不阻塞, 利用写时复制技术, 即对某块内容进行写入之前进行拷贝. 然后对拷贝的内容执行快照))。</li>
+<li>执行shutdown关闭数据库</li>
+<li>配置文件配置的定时保存快照触发</li>
+</ol>
+<ul>
+<li>优点： 性能友好， 恢复更快</li>
+<li>缺点： 数据不安全，数据集较大时， 比较消耗CPU和消耗时间</li>
+</ul>
+<h4 id="3-2-AOF-持久化"><a href="#3-2-AOF-持久化" class="headerlink" title="3.2 AOF 持久化"></a>3.2 AOF 持久化</h4><p>记录数据的变化， 将命令添加到aof文件中。 </p>
+<ul>
+<li>优点： 数据更安全， 内容可读</li>
+<li>缺点： 占用体积大，恢复慢， 对Redis性能有所影响。 (会对下一个操作带来阻塞风险)</li>
+</ul>
+<p><img src="/2021/01/19/面试汇总-Redis/./72f547f18dbac788c7d11yy167d7ebf8.jpg" alt="enter image description here"></p>
+<blockquote>
+<p>AOF文件太大, 可以通过AOF重写来解决. 即对同一个key的多个操作进行组合.<br>后台线程操作, 不会阻塞主线程. 并通过两个日志来处理解决新来的请求. </p>
+</blockquote>
+<h4 id="3-3-AOF混合RDB"><a href="#3-3-AOF混合RDB" class="headerlink" title="3.3 AOF混合RDB"></a>3.3 AOF混合RDB</h4><blockquote>
+<p>即两次执行RDB之间记录AOF日志</p>
+</blockquote>
+<h3 id="4-Redis主从同步"><a href="#4-Redis主从同步" class="headerlink" title="4. Redis主从同步"></a>4. Redis主从同步</h3><h4 id="4-1-策略"><a href="#4-1-策略" class="headerlink" title="4.1 策略"></a>4.1 策略</h4><ol>
+<li>初期主库将rdb文件同步给从库</li>
+<li>从库清空现有数据, 加载rdb文件</li>
+<li>后期主库将命令同步给从库</li>
+</ol>
+<h4 id="4-2-主-从-从模式分担主库压力"><a href="#4-2-主-从-从模式分担主库压力" class="headerlink" title="4.2 主-从-从模式分担主库压力"></a>4.2 主-从-从模式分担主库压力</h4><p><em>同时带来更高的主从延迟</em><br><em>或许可以考虑新增的从库, 初期同步rdb从从库同步, 后期同步命令从主库同步, 这样新从库启动并稳定后, 延迟会降低</em></p>
+<p><img src="/2021/01/19/面试汇总-Redis/./403c2ab725dca8d44439f8994959af45.jpg" alt="enter image description here"></p>
+<h3 id="5-Redis哨兵"><a href="#5-Redis哨兵" class="headerlink" title="5. Redis哨兵"></a>5. Redis哨兵</h3><ul>
+<li>监控: 使用哨兵集群, 监控主库健康度<ul>
+<li>主观下线: 如果哨兵发现主库或从库对 PING 命令的响应超时了，那么，哨兵就会先把它标记为“主观下线”。</li>
+<li>客观下线: 只有大多数的哨兵实例，都判断主库已经“主观下线”了，主库才会被标记为“客观下线”</li>
+</ul>
+</li>
+<li>选主: 筛选(排除掉不符合条件的从库), 打分(对剩下的从库进行打分)<ul>
+<li>打分规则: 从库优先级, 从库复制进度, 从库 ID 号</li>
+</ul>
+</li>
+<li>通知: 发布/订阅</li>
+</ul>
+<h3 id="6-Redis扩容"><a href="#6-Redis扩容" class="headerlink" title="6. Redis扩容"></a>6. Redis扩容</h3><ul>
+<li>纵向扩展: 升级单个Redis实例的配置. 简单, 但容易阻塞(容量大了之后备份问题), 且受到硬件和成本的限制</li>
+<li>横向扩展: 数据拆分为多个Redis切片(切片集群). </li>
+</ul>
+<h4 id="6-1-数据-实例对应"><a href="#6-1-数据-实例对应" class="headerlink" title="6.1 数据-实例对应"></a>6.1 数据-实例对应</h4><ol>
+<li>一个切片集群共有 16384 个哈希槽，这些哈希槽类似于数据分区，每个键值对都会根据它的 key，被映射到一个哈希槽中。</li>
+<li>对key进行CRC16, 得到一个16bit的值, 然后<code>%16384</code>得到具体的hash槽</li>
+<li>具体的实例可以均分这些哈希槽也可以对每个实例执行哈希槽</li>
+</ol>
+<h4 id="6-2-客户端定位"><a href="#6-2-客户端定位" class="headerlink" title="6.2 客户端定位"></a>6.2 客户端定位</h4><ol>
+<li>建立连接时, 客户端会知道实例和哈希槽的对应关系</li>
+<li>迁移时, 通过error(ask/moved)来告知客户端数据变化</li>
+</ol>
+<h3 id="7-Redis做消息队列"><a href="#7-Redis做消息队列" class="headerlink" title="7. Redis做消息队列"></a>7. Redis做消息队列</h3><p>摘自: <a href="https://mp.weixin.qq.com/s?__biz=MzAxMjgyMTY1NA==&amp;mid=401601934&amp;idx=1&amp;sn=f87768708cdfe54fb6c302f203f3af44#rd" target="_blank" rel="noopener">从Redis谈起（三）—— Redis和消息中间件</a></p>
+<p><em>如果对消息安全性要求没那么高, 还是一个轻量级的消息队列解决方案</em></p>
+<blockquote>
+<ol>
+<li>Redis自带的PUB/SUB机制，即发布-订阅模式。这种模式生产者(producer)和消费者(consumer)是1-M的关系，即一条消息会被多个消费者消费，当只有一个消费者时即可以看做一个1-1的消息队列，但这种方式并不适合题主的场景。首先，数据可靠性的无法保障，题主的数据最终需要落库，如果消息丢失、Redis宕机部分数据没有持久化甚至突然的网络抖动都可能带来数据的丢失，应该是无法忍受的。其次，扩展不灵活，没法通过多加consumer来加快消费的进度，如果前端写入数据太多，同步会比较慢，数据不同步的状态越久，风险越大，可以通过channel拆分的方式来解决，虽然不灵活，但可以规避。这种方案更适合于对数据可靠性要求不高，比如一些统计日志打点。</li>
+<li>Redis的PUSH/POP机制，利用的Redis的列表(lists)数据结构。比较好的使用模式是，生产者lpush消息，消费者brpop消息，并设定超时时间，可以减少redis的压力。这种方案相对于第一种方案是数据可靠性提高了，只有在Redis宕机且数据没有持久化的情况下丢失数据，可以根据业务通过AOF和缩短持久化间隔来保证很高的可靠性，而且也可以通过多个client来提高消费速度。但相对于专业的消息队列来说，该方案消息的状态过于简单(没有状态)，且没有ack机制，消息取出后消费失败依赖于client记录日志或者重新push到队列里面。</li>
+</ol>
+</blockquote>
+<h3 id="8-Redis的内存淘汰策略"><a href="#8-Redis的内存淘汰策略" class="headerlink" title="8. Redis的内存淘汰策略"></a>8. Redis的内存淘汰策略</h3><ol>
+<li>直接返回报错</li>
+<li>从所有key中随机淘汰</li>
+<li>从设置了过期时间的key中随机淘汰</li>
+<li>从所有key中执行lru进行淘汰</li>
+<li>从设置了过期时间的key中执行lru进行淘汰</li>
+<li>在设置了过期时间的Key中， 按照过期时间进行淘汰</li>
+</ol>
+<h3 id="9-Redis缓存穿透、击穿、雪崩的区别以及如何规避"><a href="#9-Redis缓存穿透、击穿、雪崩的区别以及如何规避" class="headerlink" title="9. Redis缓存穿透、击穿、雪崩的区别以及如何规避"></a>9. Redis缓存穿透、击穿、雪崩的区别以及如何规避</h3><ul>
+<li>穿透：用户请求大量的非法值， 导致每次都无法命中redis，最终流量都打到库中。<ol>
+<li>对非法值添加到缓存， 比如null</li>
+<li>对请求参数增加校验， 直接拦截掉明显的非法请求。</li>
+<li>使用布隆过滤器决定某个值不存在。 </li>
+</ol>
+</li>
+<li>击穿：某个时刻缓存失效导致同时有大量的请求打到数据库。 <ul>
+<li>设置热点数据永不过期， 或者访问库之前添加互斥锁</li>
+</ul>
+</li>
+<li>雪崩：大量的缓存同时失效， 导致请求都流向了数据库。 <ol>
+<li>设置随机的缓存失效时间</li>
+</ol>
+</li>
+</ul>
+<p><em>布隆过滤器: 当一个元素被加入集合时，通过K个散列函数将这个元素映射成一个位数组中的K个点，把它们置为1。检索时，我们只要看看这些点是不是都是1就（大约）知道集合中有没有它了：如果这些点有任何一个0，则被检元素一定不在；如果都是1，则被检元素很可能在。这就是布隆过滤器的基本思想。</em></p>
+<h2 id="四-特殊的数据结构和算法"><a href="#四-特殊的数据结构和算法" class="headerlink" title="四. 特殊的数据结构和算法"></a>四. 特殊的数据结构和算法</h2><ol>
+<li>bitmap</li>
+<li>hyperloglog</li>
+<li>geohash</li>
+</ol>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Redis/" rel="tag"># Redis</a>
+          
+            <a href="/tags/面试/" rel="tag"># 面试</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/10/24/Golang汇编基础/" rel="next" title="Golang汇编基础">
+                <i class="fa fa-chevron-left"></i> Golang汇编基础
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/01/30/面试汇总-消息队列/" rel="prev" title="面试汇总-消息队列(RocketMQ为主)">
+                面试汇总-消息队列(RocketMQ为主) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
+            
+              <p class="site-author-name" itemprop="name">flyfish</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">33</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  <a href="/categories/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">9</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  <a href="/tags/index.html">
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">24</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+
+          
+          
+
+          
+            
+          
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Redis-知识点"><span class="nav-text">Redis 知识点</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一-数据结构"><span class="nav-text">一. 数据结构</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-简单动态字符串"><span class="nav-text">1. 简单动态字符串</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-链表"><span class="nav-text">2. 链表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-字典"><span class="nav-text">3. 字典</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-跳跃表"><span class="nav-text">4. 跳跃表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-整数集合"><span class="nav-text">5. 整数集合</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-压缩列表"><span class="nav-text">6. 压缩列表</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二-对象"><span class="nav-text">二. 对象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-字符串对象"><span class="nav-text">1. 字符串对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-列表对象"><span class="nav-text">2. 列表对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-哈希对象"><span class="nav-text">3. 哈希对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-集合对象"><span class="nav-text">4. 集合对象</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-有序集合对象"><span class="nav-text">5. 有序集合对象</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三-Q-amp-A"><span class="nav-text">三. Q&amp;A</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-为什么Redis使用跳跃表不使用红黑树"><span class="nav-text">1. 为什么Redis使用跳跃表不使用红黑树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-为什么Redis快"><span class="nav-text">2. 为什么Redis快</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Redis的持久化机制-灾备"><span class="nav-text">3. Redis的持久化机制(灾备)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#3-1-RDB快照持久化"><span class="nav-text">3.1 RDB快照持久化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-2-AOF-持久化"><span class="nav-text">3.2 AOF 持久化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-3-AOF混合RDB"><span class="nav-text">3.3 AOF混合RDB</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-Redis主从同步"><span class="nav-text">4. Redis主从同步</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#4-1-策略"><span class="nav-text">4.1 策略</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-2-主-从-从模式分担主库压力"><span class="nav-text">4.2 主-从-从模式分担主库压力</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-Redis哨兵"><span class="nav-text">5. Redis哨兵</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-Redis扩容"><span class="nav-text">6. Redis扩容</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#6-1-数据-实例对应"><span class="nav-text">6.1 数据-实例对应</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-2-客户端定位"><span class="nav-text">6.2 客户端定位</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-Redis做消息队列"><span class="nav-text">7. Redis做消息队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#8-Redis的内存淘汰策略"><span class="nav-text">8. Redis的内存淘汰策略</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#9-Redis缓存穿透、击穿、雪崩的区别以及如何规避"><span class="nav-text">9. Redis缓存穿透、击穿、雪崩的区别以及如何规避</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四-特殊的数据结构和算法"><span class="nav-text">四. 特殊的数据结构和算法</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">flyfish</span>
+
+  
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a href="https://hexo.io" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v3.9.0</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 – <a href="https://theme-next.org" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> v6.5.0</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+	
+    
+
+    
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=6.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=6.5.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=6.5.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=6.5.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=6.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
