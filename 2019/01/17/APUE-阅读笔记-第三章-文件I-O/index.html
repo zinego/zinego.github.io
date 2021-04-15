@@ -224,7 +224,7 @@
 
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
 
   
   
@@ -234,7 +234,7 @@
   <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-wrapper">
   <div class="site-meta ">
     
@@ -410,20 +410,20 @@
 
   
 
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/01/17/APUE-阅读笔记-第三章-文件I-O/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content>
+      <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/default.png">
     </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="flyfish's blog">
     </span>
 
@@ -491,7 +491,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
 
                 
                 
@@ -554,7 +554,7 @@ fd参数将open和openat函数区分开, 共有三种可能性:
 </code></pre><h3 id="3-5-函数close"><a href="#3-5-函数close" class="headerlink" title="3.5 函数close"></a>3.5 函数close</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">close</span><span class="params">(<span class="keyword">int</span> fd)</span></span>;</span><br></pre></td></tr></table></figure>
 <pre><code>关闭一个文件同时释放该进程加载该文件上的记录锁
 当一个进程终止时, 内核自动关闭它打开的所有文件
-</code></pre><h3 id="3-6-函数lseek"><a href="#3-6-函数lseek" class="headerlink" title="3.6 函数lseek"></a>3.6 函数lseek</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">off_t</span> <span class="title">lseek</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">off_t</span> offset, <span class="keyword">int</span> whence)</span></span>;</span><br></pre></td></tr></table></figure>
+</code></pre><h3 id="3-6-函数lseek"><a href="#3-6-函数lseek" class="headerlink" title="3.6 函数lseek"></a>3.6 函数lseek</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">off_t</span> lseek(<span class="keyword">int</span> fd, <span class="keyword">off_t</span> offset, <span class="keyword">int</span> whence);</span><br></pre></td></tr></table></figure>
 <p><strong>文件偏移量</strong></p>
 <pre><code>每个文件都会有一个与其相关联的`当前文件偏移量`. 通常是一个非负整数.
 读写都从当前文件偏移处开始, 并使偏移量增加所读写的字节数
@@ -576,11 +576,11 @@ leeek 仅将当前文件偏移量记录在内核中, 并不引起任何I/O操作
 文件中的空洞并不在磁盘上占用存储区. 
 (__书上是这么写的, 但是实际测试的时候, 发现空洞文件和普通文件占用的空间没什么不同......代码如下, 求解惑__)
 </code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">char</span> buf1[] = <span class="string">"abcdefghij"</span>;</span><br><span class="line"><span class="keyword">char</span> buf2[] = <span class="string">"ABCDEFGHIJ"</span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> fd ;</span><br><span class="line">    <span class="keyword">if</span> ((fd = creat(<span class="string">"file.hole"</span>, FILE_MODE)) &lt; <span class="number">0</span>)&#123;</span><br><span class="line">        err_sys(<span class="string">"create error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (write(fd, buf1, <span class="number">10</span>) != <span class="number">10</span>)&#123;</span><br><span class="line">        err_sys(<span class="string">"buf1 write error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (lseek(fd, <span class="number">16384</span>, SEEK_SET) == <span class="number">-1</span>)&#123;</span><br><span class="line">        err_sys(<span class="string">"lseek error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (write(fd, buf2, <span class="number">10</span>) != <span class="number">10</span>)&#123;</span><br><span class="line">        err_sys(<span class="string">"buf2 write error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">char</span> *buf3 = (<span class="keyword">char</span>*)<span class="built_in">malloc</span>(<span class="number">16394</span>);</span><br><span class="line">    <span class="built_in">memset</span>(buf3, <span class="number">2</span>, <span class="number">16394</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((fd = creat(<span class="string">"file.nohole"</span>,FILE_MODE)) &lt; <span class="number">0</span>)&#123;</span><br><span class="line">        perror(<span class="string">"create file error : "</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (write(fd, buf3, <span class="built_in">strlen</span>(buf3)) != <span class="built_in">strlen</span>(buf3))&#123;</span><br><span class="line">        perror(<span class="string">"write error : "</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span> (buf3);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ls -ls file.hole file.nohole</span></span><br><span class="line"><span class="comment">//20 -rw-r--r-- 1 vagrant vagrant 16394 1月  18 15:00 file.hole</span></span><br><span class="line"><span class="comment">//20 -rw-r--r-- 1 vagrant vagrant 16394 1月  18 15:00 file.nohole</span></span><br><span class="line"><span class="comment">// 不明白为什么都是20 , 按书上讲的, 空洞文件应该是4才对...</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//问题更新, 同样的文件, 放到/share下面是文件块大小是20, 放到home目录下是8 , why?</span></span><br></pre></td></tr></table></figure>
-<h3 id="3-7-函数read"><a href="#3-7-函数read" class="headerlink" title="3.7 函数read"></a>3.7 函数read</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">read</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="3-7-函数read"><a href="#3-7-函数read" class="headerlink" title="3.7 函数read"></a>3.7 函数read</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">ssize_t</span> read(<span class="keyword">int</span> fd, <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes);</span><br></pre></td></tr></table></figure>
 <pre><code>如果read成功, 则返回读取到的字节数. 如果已经到达文件尾端,返回0;
 实际读取到的字节数少于要求读的字节数的情况: 
-</code></pre><p><img src="/2019/01/17/APUE-阅读笔记-第三章-文件I-O/./111.png" alt></p>
-<h3 id="3-8-函数write"><a href="#3-8-函数write" class="headerlink" title="3.8 函数write"></a>3.8 函数write</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">write</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes)</span></span>;</span><br></pre></td></tr></table></figure>
+</code></pre><p><img src="/2019/01/17/APUE-阅读笔记-第三章-文件I-O/./111.png" alt=""></p>
+<h3 id="3-8-函数write"><a href="#3-8-函数write" class="headerlink" title="3.8 函数write"></a>3.8 函数write</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">ssize_t</span> write(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes);</span><br></pre></td></tr></table></figure>
 <pre><code>write 出错常见原因是磁盘已经写满, 或者超过了一个给定进程的文件长度限制
 </code></pre><h3 id="3-9-I-O的效率"><a href="#3-9-I-O的效率" class="headerlink" title="3.9 I/O的效率"></a>3.9 I/O的效率</h3><pre><code>BUFSIZE的大小在4096字节以上比较好
 </code></pre><h3 id="3-11-文件原子操作"><a href="#3-11-文件原子操作" class="headerlink" title="3.11 文件原子操作"></a>3.11 文件原子操作</h3><p><strong>问题提出</strong></p>
@@ -588,7 +588,7 @@ leeek 仅将当前文件偏移量记录在内核中, 并不引起任何I/O操作
 此时, A进程写的部分内容会被B进程覆盖掉
 所以: 每个进程的lseek和写操作应该是原子的, 不能被打断.(打开文件时设置O_APPEND标志可线程安全的进行多文件末尾追加操作)
 某扩展实现了pread和pwrite方法
-</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">pread</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes, <span class="keyword">off_t</span> offset)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">pwrite</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes, <span class="keyword">off_t</span> offset)</span></span>;</span><br></pre></td></tr></table></figure>
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">ssize_t</span> pread(<span class="keyword">int</span> fd, <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes, <span class="keyword">off_t</span> offset);</span><br><span class="line"><span class="keyword">ssize_t</span> pwrite(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes, <span class="keyword">off_t</span> offset);</span><br></pre></td></tr></table></figure>
 <p><strong>特性</strong></p>
 <pre><code>调用pread/pwrite时, 无法中断其定位和读操作
 不更新当前文件偏移量
@@ -748,7 +748,7 @@ fdatasync只同步文件的数据, fsync同步数据和文件属性
 
       <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
               <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
             
@@ -763,7 +763,7 @@ fdatasync只同步文件的数据, fsync同步数据和文件属性
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">33</span>
+                    <span class="site-state-item-count">34</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -855,7 +855,9 @@ fdatasync只同步文件的数据, fsync同步数据和文件属性
                     
                       
                     
-                    <span class="site-state-item-count">24</span>
+                      
+                    
+                    <span class="site-state-item-count">25</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

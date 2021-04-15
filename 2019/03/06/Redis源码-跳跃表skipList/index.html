@@ -153,7 +153,7 @@
 
 
   <meta name="description" content="跳跃表1. 内存分布 123456789101112131415typedef struct zskiplistNode &amp;#123;    sds ele;                            // 元素    double score;                       // 节点的分数, 据此插入时对节点进行排序    struct zskiplistNode *">
-<meta name="keywords" content="C语言,源码阅读,Redis">
+<meta name="keywords" content="C语言,Redis,源码阅读">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Redis源码-跳跃表skipList">
 <meta property="og:url" content="http://yoursite.com/2019/03/06/Redis源码-跳跃表skipList/index.html">
@@ -226,7 +226,7 @@
 
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
 
   
   
@@ -236,7 +236,7 @@
   <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-wrapper">
   <div class="site-meta ">
     
@@ -412,20 +412,20 @@
 
   
 
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/03/06/Redis源码-跳跃表skipList/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content>
+      <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/default.png">
     </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="flyfish's blog">
     </span>
 
@@ -481,7 +481,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/C语言/" itemprop="url" rel="index"><span itemprop="name">C语言</span></a></span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/C语言/" itemprop="url" rel="index"><span itemprop="name">C语言</span></a></span>
 
                 
                 
@@ -566,9 +566,9 @@ update[3]-&gt;level[3].span=(rank[0]-rank[3])+1=2
           
             <a href="/tags/C语言/" rel="tag"># C语言</a>
           
-            <a href="/tags/源码阅读/" rel="tag"># 源码阅读</a>
-          
             <a href="/tags/Redis/" rel="tag"># Redis</a>
+          
+            <a href="/tags/源码阅读/" rel="tag"># 源码阅读</a>
           
         </div>
       
@@ -650,7 +650,7 @@ update[3]-&gt;level[3].span=(rank[0]-rank[3])+1=2
 
       <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
               <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
             
@@ -665,7 +665,7 @@ update[3]-&gt;level[3].span=(rank[0]-rank[3])+1=2
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">33</span>
+                    <span class="site-state-item-count">34</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -757,7 +757,9 @@ update[3]-&gt;level[3].span=(rank[0]-rank[3])+1=2
                     
                       
                     
-                    <span class="site-state-item-count">24</span>
+                      
+                    
+                    <span class="site-state-item-count">25</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

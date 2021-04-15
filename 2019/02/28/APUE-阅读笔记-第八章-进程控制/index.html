@@ -229,7 +229,7 @@
 
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
 
   
   
@@ -239,7 +239,7 @@
   <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-wrapper">
   <div class="site-meta ">
     
@@ -415,20 +415,20 @@
 
   
 
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/28/APUE-阅读笔记-第八章-进程控制/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content>
+      <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/default.png">
     </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="flyfish's blog">
     </span>
 
@@ -484,7 +484,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
 
                 
                 
@@ -528,8 +528,8 @@
 ID为0 的进程通常是调度进程, 被称为交换进程
 ID为1 的进程通常是init进程, 在自举结束时由内核调用, 负责启动一个UNIX系统. 是一个普通用户进程, 但是由超级用户特权运行.ssh
 在某些UNIX系统的虚拟存储器实现中, 进程ID2是页守护进程, 此进程负责支持虚拟存储器系统.
-</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">pid_t</span> <span class="title">getpid</span><span class="params">()</span></span>; <span class="comment">// 返回进程ID</span></span><br><span class="line"><span class="function"><span class="keyword">pid_t</span> <span class="title">getppid</span><span class="params">()</span></span>; <span class="comment">// 返回父进程ID</span></span><br><span class="line"><span class="function"><span class="keyword">uid_t</span> <span class="title">getuid</span><span class="params">()</span></span>; <span class="comment">// 返回进程的用户ID</span></span><br><span class="line"><span class="function"><span class="keyword">uid_t</span> <span class="title">geteuid</span><span class="params">()</span></span>;<span class="comment">// 返回进程的有效用户ID</span></span><br><span class="line"><span class="function"><span class="keyword">gid_t</span> <span class="title">getgid</span><span class="params">()</span></span>; <span class="comment">// 返回进程的组ID</span></span><br><span class="line"><span class="function"><span class="keyword">gid_t</span> <span class="title">getegid</span><span class="params">()</span></span>; <span class="comment">// 返回进程的有效组ID</span></span><br></pre></td></tr></table></figure>
-<h3 id="8-3-函数fork"><a href="#8-3-函数fork" class="headerlink" title="8.3 函数fork"></a>8.3 函数fork</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">pid_t</span> <span class="title">fork</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> getpid(); <span class="comment">// 返回进程ID</span></span><br><span class="line"><span class="keyword">pid_t</span> getppid(); <span class="comment">// 返回父进程ID</span></span><br><span class="line"><span class="keyword">uid_t</span> getuid(); <span class="comment">// 返回进程的用户ID</span></span><br><span class="line"><span class="keyword">uid_t</span> geteuid();<span class="comment">// 返回进程的有效用户ID</span></span><br><span class="line"><span class="keyword">gid_t</span> getgid(); <span class="comment">// 返回进程的组ID</span></span><br><span class="line"><span class="keyword">gid_t</span> getegid(); <span class="comment">// 返回进程的有效组ID</span></span><br></pre></td></tr></table></figure>
+<h3 id="8-3-函数fork"><a href="#8-3-函数fork" class="headerlink" title="8.3 函数fork"></a>8.3 函数fork</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> fork(<span class="keyword">void</span>);</span><br></pre></td></tr></table></figure>
 <pre><code>由函数fork创建的新进程被称为子进程. fork函数被调用一次, 但是返回两次.
 两次返回的区别是子进程的返回值是0, 而父进程的返回值则是子进程的进程ID. 
 子进程和父进程继续执行fork调用之后的指令, 子进程是父进程的副本. 共享正文段, 但是并不共享堆栈和数据空间
@@ -599,7 +599,7 @@ vfork保证子进程先运行. 调用exit或者exec之后, 父进程 才可能�
 1. 如果其所有子进程都还在运行, 则阻塞
 2. 如果一个子进程已终止, 正等待父进程获取其终止装填, 则取得该子进程的终止状态立即返回
 3. 如果它没有任何子进程, 则立即出错返回
-</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">pid_t</span> <span class="title">wait</span><span class="params">(<span class="keyword">int</span> *statloc)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">pid_t</span> <span class="title">waitpid</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *statloc, <span class="keyword">int</span> options)</span></span>;</span><br></pre></td></tr></table></figure>
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> wait(<span class="keyword">int</span> *statloc);</span><br><span class="line"><span class="keyword">pid_t</span> waitpid(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *statloc, <span class="keyword">int</span> options);</span><br></pre></td></tr></table></figure>
 <pre><code>statloc 是一个整型指针, 如果说statloc不是一个空指针,
 则终止进程的终止状态就存放在它所指向的单元内. 
 </code></pre><p><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./wait.png" alt="Alt text"></p>
@@ -621,7 +621,7 @@ id参数的作用于idtype的值有关, 该函数支持的IDtype类型的值如�
 </code></pre><p><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./waitid_option.png" alt="Alt text"></p>
 <pre><code>WCONTINUED, WEXITED或者WSTOPPED三个常量之一必须在options参数中指定.
 info参数是指向siginfo结构的指针, 该结构包含了造成子进程状态改变有关信号的详细信息
-</code></pre><h3 id="8-8-函数wait3或者函数wait4"><a href="#8-8-函数wait3或者函数wait4" class="headerlink" title="8.8 函数wait3或者函数wait4"></a>8.8 函数wait3或者函数wait4</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;resource.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">pid_t</span> <span class="title">wait3</span><span class="params">(<span class="keyword">int</span> *statloc, <span class="keyword">int</span> options, struct rusage *rusage)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">pid_t</span> <span class="title">wait4</span><span class="params">(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *statloc, <span class="keyword">int</span> options, struct rusage *rusage)</span></span>;</span><br></pre></td></tr></table></figure>
+</code></pre><h3 id="8-8-函数wait3或者函数wait4"><a href="#8-8-函数wait3或者函数wait4" class="headerlink" title="8.8 函数wait3或者函数wait4"></a>8.8 函数wait3或者函数wait4</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;resource.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">pid_t</span> wait3(<span class="keyword">int</span> *statloc, <span class="keyword">int</span> options, struct rusage *rusage);</span><br><span class="line"><span class="keyword">pid_t</span> wait4(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *statloc, <span class="keyword">int</span> options, struct rusage *rusage);</span><br></pre></td></tr></table></figure>
 <pre><code>比wait和waitpid的功能多一个, 这与附加参数有关. 
 该附加参数允许内核返回由终止进程以及其所有子进程使用的资源概况
 资源概况包括: 用户CPU时间总量, 系统CPU时间总量, 缺页次数, 接收到信号的次数等. 
@@ -710,7 +710,7 @@ incr参数被增加到调用进程的nice值上面, 如果incr太大/太小, 系
 3. PRIO_USER 标识用户ID
 如果which作用于多个进程,返回优先级最高的. 
 </code></pre><p><strong>设置一组相关进程的nice值</strong><br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setpriority</span><span class="params">(<span class="keyword">int</span> which, <span class="keyword">id_t</span> who, <span class="keyword">int</span> value)</span></span>;</span><br></pre></td></tr></table></figure></p>
-<h3 id="8-17进程时间"><a href="#8-17进程时间" class="headerlink" title="8.17进程时间"></a>8.17进程时间</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/times.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">clock_t</span> <span class="title">times</span><span class="params">(struct tms *buf)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="8-17进程时间"><a href="#8-17进程时间" class="headerlink" title="8.17进程时间"></a>8.17进程时间</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/times.h&gt;</span></span></span><br><span class="line"><span class="keyword">clock_t</span> times(struct tms *buf);</span><br></pre></td></tr></table></figure>
 
       
     </div>
@@ -820,7 +820,7 @@ incr参数被增加到调用进程的nice值上面, 如果incr太大/太小, 系
 
       <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
               <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
             
@@ -835,7 +835,7 @@ incr参数被增加到调用进程的nice值上面, 如果incr太大/太小, 系
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">33</span>
+                    <span class="site-state-item-count">34</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -927,7 +927,9 @@ incr参数被增加到调用进程的nice值上面, 如果incr太大/太小, 系
                     
                       
                     
-                    <span class="site-state-item-count">24</span>
+                      
+                    
+                    <span class="site-state-item-count">25</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

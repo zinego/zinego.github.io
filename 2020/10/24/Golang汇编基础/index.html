@@ -161,7 +161,7 @@
 <meta property="og:description" content="一. 寄存器基础. 寄存器（Register）是中央处理器内用来暂存指令、数据和地址的电脑存储器。寄存器的存贮容量有限，读写速度非常快。在计算机体系结构里，寄存器存储在已知时间点所作计算的中间结果，通过快速地访问数据来加速计算机程序的运行。—-来自Wikipedia.  16位CPU通用寄存器通常有8个, 分别是: AX, BX, CX, DX, BP, SP, SI, DI32位CPU通用寄存器">
 <meta property="og:locale" content="zh-CN">
 <meta property="og:image" content="http://ttc-tal.oss-cn-beijing.aliyuncs.com/1603672041/image.png">
-<meta property="og:updated_time" content="2020-10-27T00:44:10.594Z">
+<meta property="og:updated_time" content="2020-10-27T00:44:10.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Golang汇编基础">
 <meta name="twitter:description" content="一. 寄存器基础. 寄存器（Register）是中央处理器内用来暂存指令、数据和地址的电脑存储器。寄存器的存贮容量有限，读写速度非常快。在计算机体系结构里，寄存器存储在已知时间点所作计算的中间结果，通过快速地访问数据来加速计算机程序的运行。—-来自Wikipedia.  16位CPU通用寄存器通常有8个, 分别是: AX, BX, CX, DX, BP, SP, SI, DI32位CPU通用寄存器">
@@ -224,7 +224,7 @@
 
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+<body itemscope="" itemtype="http://schema.org/WebPage" lang="zh-CN">
 
   
   
@@ -234,7 +234,7 @@
   <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+    <header id="header" class="header" itemscope="" itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-wrapper">
   <div class="site-meta ">
     
@@ -410,20 +410,20 @@
 
   
 
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
   
   
   
   <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/10/24/Golang汇编基础/">
 
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
       <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content>
+      <meta itemprop="description" content="">
       <meta itemprop="image" content="/images/default.png">
     </span>
 
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
       <meta itemprop="name" content="flyfish's blog">
     </span>
 
@@ -491,7 +491,7 @@
                 <span class="post-meta-item-text">分类于</span>
               
               
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
 
                 
                 
@@ -654,7 +654,7 @@
 <li>在函数中是否有对其它函数调用时，如果有的话，调用时需要将 callee 的参数、返回值考虑在内。虽然 return address(rip)的值也是存储在 caller 的 stack frame 上的，但是这个过程是由 CALL 指令和 RET 指令完成 PC 寄存器的保存和恢复的，在手写汇编时，同样也是不需要考虑这个 PC 寄存器在栈上所需占用的 8 个字节的。</li>
 <li>原则上来说，调用函数时只要不把局部变量覆盖掉就可以了。稍微多分配几个字节的 framesize 也不会死。<br>在确保逻辑没有问题的前提下，你愿意覆盖局部变量也没有问题。只要保证进入和退出汇编函数时的 caller 和 callee 能正确拿到返回值就可以。</li>
 </ol>
-<h3 id="3-3-一些示例"><a href="#3-3-一些示例" class="headerlink" title="3.3 一些示例"></a>3.3 一些示例</h3><p>math.go:<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">add</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span> // 汇编函数声明</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">sub</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span> // 汇编函数声明</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">mul</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span> // 汇编函数声明</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    fmt.Println(add(<span class="number">10</span>, <span class="number">11</span>))</span><br><span class="line">    fmt.Println(sub(<span class="number">99</span>, <span class="number">15</span>))</span><br><span class="line">    fmt.Println(mul(<span class="number">11</span>, <span class="number">12</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h3 id="3-3-一些示例"><a href="#3-3-一些示例" class="headerlink" title="3.3 一些示例"></a>3.3 一些示例</h3><p>math.go:<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> <span class="string">"fmt"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">add</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span> // 汇编函数声明</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="title">sub</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span> // 汇编函数声明</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="title">mul</span><span class="params">(a, b <span class="keyword">int</span>)</span> <span class="title">int</span> // 汇编函数声明</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="title">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    fmt.Println(add(<span class="number">10</span>, <span class="number">11</span>))</span><br><span class="line">    fmt.Println(sub(<span class="number">99</span>, <span class="number">15</span>))</span><br><span class="line">    fmt.Println(mul(<span class="number">11</span>, <span class="number">12</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <p>math.s:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">#include &quot;textflag.h&quot; // 因为我们声明函数用到了 NOSPLIT 这样的 flag，所以需要将 textflag.h 包含进来</span><br><span class="line"></span><br><span class="line">// func add(a, b int) int</span><br><span class="line">TEXT ·add(SB), NOSPLIT, $0-24</span><br><span class="line">    MOVQ a+0(FP), AX // 参数 a</span><br><span class="line">    MOVQ b+8(FP), BX // 参数 b</span><br><span class="line">    ADDQ BX, AX    // AX += BX</span><br><span class="line">    MOVQ AX, ret+16(FP) // 返回</span><br><span class="line">    RET</span><br><span class="line"></span><br><span class="line">// func sub(a, b int) int</span><br><span class="line">TEXT ·sub(SB), NOSPLIT, $0-24</span><br><span class="line">    MOVQ a+0(FP), AX</span><br><span class="line">    MOVQ b+8(FP), BX</span><br><span class="line">    SUBQ BX, AX    // AX -= BX</span><br><span class="line">    MOVQ AX, ret+16(FP)</span><br><span class="line">    RET</span><br><span class="line"></span><br><span class="line">// func mul(a, b int) int</span><br><span class="line">TEXT ·mul(SB), NOSPLIT, $0-24</span><br><span class="line">    MOVQ  a+0(FP), AX</span><br><span class="line">    MOVQ  b+8(FP), BX</span><br><span class="line">    IMULQ BX, AX    // AX *= BX</span><br><span class="line">    MOVQ  AX, ret+16(FP)</span><br><span class="line">    RET</span><br><span class="line">    // 最后一行的空行是必须的，否则可能报 unexpected EOF</span><br></pre></td></tr></table></figure></p>
 <h2 id="常见指令"><a href="#常见指令" class="headerlink" title="常见指令"></a>常见指令</h2><table>
 <thead>
@@ -780,7 +780,7 @@
 
       <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <div class="site-author motion-element" itemprop="author" itemscope="" itemtype="http://schema.org/Person">
             
               <img class="site-author-image" itemprop="image" src="/images/default.png" alt="flyfish">
             
@@ -795,7 +795,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">33</span>
+                    <span class="site-state-item-count">34</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -887,7 +887,9 @@
                     
                       
                     
-                    <span class="site-state-item-count">24</span>
+                      
+                    
+                    <span class="site-state-item-count">25</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
