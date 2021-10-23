@@ -163,7 +163,7 @@
 <meta property="og:image" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/pic_watermark.png">
 <meta property="og:image" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/srt.png">
 <meta property="og:image" content="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/ass.png">
-<meta property="og:updated_time" content="2020-06-13T12:41:48.000Z">
+<meta property="og:updated_time" content="2021-10-23T01:46:21.834Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于FFmpeg的视频水印处理方案">
 <meta name="twitter:description" content="一. 背景 因政策需要, 五月底收到了一个应急视频水印的需求, 需要对下游生产出来的视频在转码之前进行加水印的处理, 来对视频的不同片段进行标记  二. 所需工具1. FFmpeg FFmpeg我们使用的是ffmpeg v4.2.3-static, 新版本的FFmpeg自带加水印功能, 老版本的可能需要自己编译  2. Linux字体支持 安装fontconfig yum install font">
@@ -459,12 +459,24 @@
                 
               
 
-              <time title="创建时间：2020-06-13 16:13:04 / 修改时间：20:41:48" itemprop="dateCreated datePublished" datetime="2020-06-13T16:13:04+08:00">2020-06-13</time>
+              <time title="创建时间：2020-06-13 16:13:04" itemprop="dateCreated datePublished" datetime="2020-06-13T16:13:04+08:00">2020-06-13</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:46:21" itemprop="dateModified" datetime="2021-10-23T09:46:21+08:00">2021-10-23</time>
               
             
           </span>
@@ -542,7 +554,8 @@
 </blockquote>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -vf subtitles=watermark.srt srt_watermark.mp4</span><br></pre></td></tr></table></figure>
 <p>字幕内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1</span><br><span class="line">00:00:16,266 --&gt; 00:01:00,359</span><br><span class="line">FFMPEG</span><br><span class="line"></span><br><span class="line">2</span><br><span class="line">00:01:16,266 --&gt; 00:10:25,359</span><br><span class="line">FFMPEG</span><br></pre></td></tr></table></figure></p>
-<p>加出来的效果如下图, 这种方式可以解决按时间区间加水印的需求, 但是无法指定字幕格式, 无法指定字幕位置, 就是单纯的电影字幕(至少我没找到🤦‍♂️). 这种方式也无法满足需求, pass.<br><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/srt.png" alt="image.png"></p>
+<p>加出来的效果如下图, 这种方式可以解决按时间区间加水印的需求, 但是无法指定字幕格式, 无法指定字幕位置, 就是单纯的电影字幕(至少我没找到🤦‍♂️). 这种方式也无法满足需求, pass…</p>
+<p><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/srt.png" alt="image.png"></p>
 <h3 id="3-加字幕水印-ass"><a href="#3-加字幕水印-ass" class="headerlink" title="3. 加字幕水印[ass]"></a>3. 加字幕水印[ass]</h3><p>ass字幕文件加水印可以定制很多个性化的东西, 话不多说, 上命令</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -vf <span class="string">"ass=watermark.ass"</span> ass_watermark.mp4</span><br></pre></td></tr></table></figure>
 <p>字幕文件内容为:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">[Script Info]</span><br><span class="line">Title: YYeTs</span><br><span class="line">Original Script: YYeTs</span><br><span class="line">Original Translation:</span><br><span class="line">Original Timing:</span><br><span class="line">Original Editing:</span><br><span class="line">Script Updated By:</span><br><span class="line">Update Details:</span><br><span class="line">ScriptType: v4.00+</span><br><span class="line">PlayResX: 384</span><br><span class="line">PlayResY: 288</span><br><span class="line">Timer: 100.0000</span><br><span class="line">Synch Point: 0</span><br><span class="line">WrapStyle: 0</span><br><span class="line">ScaledBorderAndShadow: no</span><br><span class="line"></span><br><span class="line">[Aegisub Project Garbage]</span><br><span class="line">Scroll Position: 483</span><br><span class="line">Active Line: 441</span><br><span class="line"></span><br><span class="line">[V4+ Styles]</span><br><span class="line">Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding</span><br><span class="line">Style: Default,HanziPen TC,24,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00FFFFFF,0,0,0,0,100,100,0,0,1,0,1,3,5,10,10,134</span><br><span class="line"></span><br><span class="line">[Events]</span><br><span class="line">Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text</span><br><span class="line">Dialogue: 0,0:00:00.12,0:10:34.29,Default,NTP,0,0,0,,&#123;\alpha&amp;H72&amp;&#125;大鱼海棠</span><br></pre></td></tr></table></figure></p>
@@ -696,7 +709,7 @@
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">34</span>
+                    <span class="site-state-item-count">31</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -782,15 +795,7 @@
                     
                       
                     
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                    <span class="site-state-item-count">25</span>
+                    <span class="site-state-item-count">21</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>

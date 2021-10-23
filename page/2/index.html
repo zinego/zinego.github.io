@@ -409,630 +409,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/13/Gin中HTTP请求的链路追踪/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/default.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="flyfish's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2020/09/13/Gin中HTTP请求的链路追踪/" class="post-title-link" itemprop="http://yoursite.com/page/2/index.html">Gin中HTTP请求的链路追踪</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2020-09-13 13:54:39" itemprop="dateCreated datePublished" datetime="2020-09-13T13:54:39+08:00">2020-09-13</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2020-09-17 08:58:48" itemprop="dateModified" datetime="2020-09-17T08:58:48+08:00">2020-09-17</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="一-监听"><a href="#一-监听" class="headerlink" title="一. 监听"></a>一. 监听</h1><p>Gin的自定义监听逻辑比较简单, 在Golang标准HTTP库上层基本没有进行什么封装, 直接调用<code>http.ListenAndServe</code>进行了监听.<br>对应的源码:<br><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">ListenAndServe</span><span class="params">(addr <span class="keyword">string</span>, handler Handler)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	server := &amp;Server&#123;Addr: addr, Handler: handler&#125;</span><br><span class="line">	<span class="keyword">return</span> server.ListenAndServe()</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(srv *Server)</span> <span class="title">ListenAndServe</span><span class="params">()</span> <span class="title">error</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> srv.shuttingDown() &#123;</span><br><span class="line">		<span class="keyword">return</span> ErrServerClosed</span><br><span class="line">	&#125;</span><br><span class="line">	addr := srv.Addr</span><br><span class="line">	<span class="keyword">if</span> addr == <span class="string">""</span> &#123;</span><br><span class="line">		addr = <span class="string">":http"</span></span><br><span class="line">	&#125;</span><br><span class="line">	ln, err := net.Listen(<span class="string">"tcp"</span>, addr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span> err</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> srv.Serve(ln)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>可以看到<code>http.ListenAndServe</code>主要进行以下工作</p>
-<ol>
-<li>生成监听器(Listen)<ul>
-<li>解析监听地址&amp;端口号</li>
-<li>获取文件描述符</li>
-</ul>
-</li>
-<li>接受请求(Serve)</li>
-</ol>
-<h2 id="1-1-生成监听器-Listen"><a href="#1-1-生成监听器-Listen" class="headerlink" title="1.1 生成监听器(Listen)"></a>1.1 生成监听器(Listen)</h2><blockquote>
-<p>关键代码: net/sock_posix.go</p>
-</blockquote>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// socket returns a network file descriptor that is ready for</span></span><br><span class="line"><span class="comment">// asynchronous I/O using the network poller.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">socket</span><span class="params">(ctx context.Context, net <span class="keyword">string</span>, family, sotype, proto <span class="keyword">int</span>, ipv6only <span class="keyword">bool</span>, laddr, raddr sockaddr, ctrlFn <span class="keyword">func</span>(<span class="keyword">string</span>, <span class="keyword">string</span>, syscall.RawConn)</span> <span class="title">error</span>) <span class="params">(fd *netFD, err error)</span></span> &#123;</span><br><span class="line">    s, err := sysSocket(family, sotype, proto)</span><br><span class="line">    <span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> err = setDefaultSockopts(s, family, sotype, ipv6only); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        poll.CloseFunc(s)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> fd, err = newFD(s, family, sotype, net); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        poll.CloseFunc(s)</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> laddr != <span class="literal">nil</span> &amp;&amp; raddr == <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">switch</span> sotype &#123;</span><br><span class="line">        <span class="keyword">case</span> syscall.SOCK_STREAM, syscall.SOCK_SEQPACKET:</span><br><span class="line">            <span class="keyword">if</span> err := fd.listenStream(laddr, listenerBacklog(), ctrlFn); err != <span class="literal">nil</span> &#123; <span class="comment">// 流监听器</span></span><br><span class="line">                fd.Close()</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> fd, <span class="literal">nil</span></span><br><span class="line">        <span class="keyword">case</span> syscall.SOCK_DGRAM:</span><br><span class="line">            <span class="keyword">if</span> err := fd.listenDatagram(laddr, ctrlFn); err != <span class="literal">nil</span> &#123; <span class="comment">// 数据报监听器</span></span><br><span class="line">                fd.Close()</span><br><span class="line">                <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> fd, <span class="literal">nil</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> err := fd.dial(ctx, laddr, raddr, ctrlFn); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        fd.Close()</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> fd, <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>在该函数的第一部分, 进行了系统调用, 创建了一个socket(关于创建套接字等套接字基础知识, 参见<a href="https://docs.oracle.com/cd/E19253-01/819-7052/sockets-87164/index.html" target="_blank" rel="noopener">套接字基础知识</a>), 此时的参数分别为: </p>
-<ul>
-<li>family: AF_INET6 Internet IPv6 和 IPv4 系列</li>
-<li>sotype: syscall.SOCK_STREAM 可靠面向链接字节流-TCP</li>
-<li>proto: 缺省0. </li>
-</ul>
-</blockquote>
-<blockquote>
-<p>该函数的第二部分, 对套接字设置了默认选项, 注意此时ipv6only=false. (关于套接字选项的相关知识, 参见<a href="https://docs.oracle.com/cd/E19253-01/819-7052/sockets-49/index.html" target="_blank" rel="noopener">套接字选项</a>)</p>
-</blockquote>
-<blockquote>
-<p>接着创建了一个流监听器, 点开<code>listenDatagram</code>, 可以发现, 在函数内部, 进行了<code>syscall.Bind</code>的系统调用来绑定<a href="https://docs.oracle.com/cd/E19253-01/819-7052/sockets-6/index.html" target="_blank" rel="noopener">本地地址</a>, 调用<code>syscall.Listen</code>来设置监听器允许积压量.<br>通过<a href="https://docs.oracle.com/cd/E19253-01/819-7052/sockets-8/index.html" target="_blank" rel="noopener">建立连接</a>的文档——<code>要接收客户机的连接，服务器必须在绑定其套接字之后执行两个步骤。第一步是说明可以排队多少连接请求。第二步接受连接。</code><br>我们可以发现一个疑问, 在socket函数中, 仅仅进行了第一步操作, 也就是调用<code>syscall.Listen</code>来说明可以排队多少连接请求, 但并没有调用<code>syscall.Accept</code>来接受连接. 很简单, 接受连接的系统调用在下一部分: <code>接收请求</code>.</p>
-</blockquote>
-<blockquote>
-<p>那么该函数的最后一部分, fd.dial主要做了什么工作呢? 实际上socket函数不仅用于服务端监听, 也用于客户端主动建立连接. 当服务端进行监听时, 走fd.listenxxxxx的逻辑, 而接着就直接退出该函数. 当客户端监听时, 直接进入fd.dial的逻辑, 进入该函数, 也可以看到, 内部进行了<code>syscall.Connect</code>的系统调用. </p>
-</blockquote>
-<h2 id="1-2-接受请求-Serve"><a href="#1-2-接受请求-Serve" class="headerlink" title="1.2 接受请求(Serve)"></a>1.2 接受请求(Serve)</h2><p>首先来看一看注释</p>
-<pre><code>// Serve accepts incoming connections on the Listener l, creating a
-// new service goroutine for each. The service goroutines read requests and
-// then call srv.Handler to reply to them.
-// 
-// Serve通过监听器l来接收进来的请求, 并为每一个请求创建一个协程. 该协程读取请求, 然后调用srv.Handler进行响应
-</code></pre><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(srv *Server)</span> <span class="title">Serve</span><span class="params">(l net.Listener)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">	baseCtx := context.Background()</span><br><span class="line">	<span class="keyword">if</span> srv.BaseContext != <span class="literal">nil</span> &#123;</span><br><span class="line">		baseCtx = srv.BaseContext(origListener)</span><br><span class="line">		<span class="keyword">if</span> baseCtx == <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="built_in">panic</span>(<span class="string">"BaseContext returned a nil context"</span>)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	ctx := context.WithValue(baseCtx, ServerContextKey, srv)</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		rw, e := l.Accept()</span><br><span class="line">		<span class="keyword">if</span> e != <span class="literal">nil</span> &#123;</span><br><span class="line">			...</span><br><span class="line">			<span class="keyword">return</span> e</span><br><span class="line">		&#125;</span><br><span class="line">		connCtx := ctx</span><br><span class="line">		<span class="keyword">if</span> cc := srv.ConnContext; cc != <span class="literal">nil</span> &#123;</span><br><span class="line">			connCtx = cc(connCtx, rw)</span><br><span class="line">			<span class="keyword">if</span> connCtx == <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="built_in">panic</span>(<span class="string">"ConnContext returned nil"</span>)</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		tempDelay = <span class="number">0</span></span><br><span class="line">		c := srv.newConn(rw)</span><br><span class="line">		c.setState(c.rwc, StateNew) <span class="comment">// before Serve can return</span></span><br><span class="line">		<span class="keyword">go</span> c.serve(connCtx)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>可以看到, 在这个函数中, 通过循环去不断的接受连接, 在更底层的地方, <code>l.Accept()</code>也进行了建立连接(<code>syscall.Accept</code>)的系统调用, 并将socket设置为非阻塞型IO, 返回的rw为一个TCP连接<code>TCPConn</code>, 接着新启动一个协程来处理该链接, 然后开始等待下一次<code>新连接</code>的到来. 接着看一下Golang如何处理一个链接</p>
-</blockquote>
-<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Serve a new connection.</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *conn)</span> <span class="title">serve</span><span class="params">(ctx context.Context)</span></span> &#123;</span><br><span class="line">	c.remoteAddr = c.rwc.RemoteAddr().String()</span><br><span class="line">	ctx = context.WithValue(ctx, LocalAddrContextKey, c.rwc.LocalAddr())</span><br><span class="line">	<span class="keyword">defer</span> <span class="function"><span class="keyword">func</span><span class="params">()</span></span> &#123;</span><br><span class="line">		<span class="keyword">if</span> err := <span class="built_in">recover</span>(); err != <span class="literal">nil</span> &amp;&amp; err != ErrAbortHandler &#123;</span><br><span class="line">			<span class="keyword">const</span> size = <span class="number">64</span> &lt;&lt; <span class="number">10</span></span><br><span class="line">			buf := <span class="built_in">make</span>([]<span class="keyword">byte</span>, size)</span><br><span class="line">			buf = buf[:runtime.Stack(buf, <span class="literal">false</span>)]</span><br><span class="line">			c.server.logf(<span class="string">"http: panic serving %v: %v\n%s"</span>, c.remoteAddr, err, buf)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> !c.hijacked() &#123;</span><br><span class="line">			c.<span class="built_in">close</span>()</span><br><span class="line">			c.setState(c.rwc, StateClosed)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;()</span><br><span class="line"></span><br><span class="line">	<span class="comment">// tls 处理逻辑...</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// HTTP/1.x from here on.</span></span><br><span class="line"></span><br><span class="line">	ctx, cancelCtx := context.WithCancel(ctx)</span><br><span class="line">	c.cancelCtx = cancelCtx</span><br><span class="line">	<span class="keyword">defer</span> cancelCtx()</span><br><span class="line"></span><br><span class="line">	c.r = &amp;connReader&#123;conn: c&#125;</span><br><span class="line">	c.bufr = newBufioReader(c.r)</span><br><span class="line">	c.bufw = newBufioWriterSize(checkConnErrorWriter&#123;c&#125;, <span class="number">4</span>&lt;&lt;<span class="number">10</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		w, err := c.readRequest(ctx)</span><br><span class="line">		<span class="keyword">if</span> c.r.remain != c.server.initialReadLimitSize() &#123;</span><br><span class="line">			<span class="comment">// If we read any bytes off the wire, we're active.</span></span><br><span class="line">			c.setState(c.rwc, StateActive)</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">            ...</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// Expect 100 Continue support</span></span><br><span class="line">		req := w.req</span><br><span class="line">		<span class="keyword">if</span> req.expectsContinue() &#123;</span><br><span class="line">			<span class="keyword">if</span> req.ProtoAtLeast(<span class="number">1</span>, <span class="number">1</span>) &amp;&amp; req.ContentLength != <span class="number">0</span> &#123;</span><br><span class="line">				<span class="comment">// Wrap the Body reader with one that replies on the connection</span></span><br><span class="line">				req.Body = &amp;expectContinueReader&#123;readCloser: req.Body, resp: w&#125;</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">else</span> <span class="keyword">if</span> req.Header.get(<span class="string">"Expect"</span>) != <span class="string">""</span> &#123;</span><br><span class="line">			w.sendExpectationFailed()</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		c.curReq.Store(w)</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> requestBodyRemains(req.Body) &#123;</span><br><span class="line">			registerOnHitEOF(req.Body, w.conn.r.startBackgroundRead)</span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			w.conn.r.startBackgroundRead()</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		serverHandler&#123;c.server&#125;.ServeHTTP(w, w.req)</span><br><span class="line">		w.cancelCtx()</span><br><span class="line">		<span class="keyword">if</span> c.hijacked() &#123;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		w.finishRequest()</span><br><span class="line">		<span class="keyword">if</span> !w.shouldReuseConnection() &#123;</span><br><span class="line">			<span class="keyword">if</span> w.requestBodyLimitHit || w.closedRequestBodyEarly() &#123;</span><br><span class="line">				c.closeWriteAndWait()</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		c.setState(c.rwc, StateIdle)</span><br><span class="line">		c.curReq.Store((*response)(<span class="literal">nil</span>))</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> !w.conn.server.doKeepAlives() &#123;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">if</span> d := c.server.idleTimeout(); d != <span class="number">0</span> &#123;</span><br><span class="line">			c.rwc.SetReadDeadline(time.Now().Add(d))</span><br><span class="line">			<span class="keyword">if</span> _, err := c.bufr.Peek(<span class="number">4</span>); err != <span class="literal">nil</span> &#123;</span><br><span class="line">				<span class="keyword">return</span></span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">		c.rwc.SetReadDeadline(time.Time&#123;&#125;)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<blockquote>
-<p>在这段代码中, 有循环读取链接的逻辑. 一开始还有些疑问, Golang不是每次请求都会有一个协程处理吗? 后来查了查, 发现是HTTP的长连接. 确切的说, 并不是每次请求都有一个新的协程去处理, 而是每次新的链接都有一个新的协程处理. 而对于HTTP长连接来说, 多次请求由同一个协程去处理. 然后就有了一次迷糊的过程: </p>
-</blockquote>
-<h3 id="1-2-1-一次犯迷糊的验证过程"><a href="#1-2-1-一次犯迷糊的验证过程" class="headerlink" title="1.2.1 一次犯迷糊的验证过程"></a>1.2.1 一次犯迷糊的验证过程</h3><blockquote>
-<p><img src="/2020/09/13/Gin中HTTP请求的链路追踪/1.png" alt="image.png"><br>因为是HTTP长连接, 所以就想验证下, 然后我用了Postman来请求, 用Goland来打断点debug, 发现每次处理完请求, 都会阻塞在1817行的readRequest那里, 此时相当于等待该链接的下一次请求.<br>后来我换了curl来请求, 然后发现处理完这一次请求之后, 依旧是1817行但是没有阻塞, 返回了EOF的err, </p>
-</blockquote>
-<h1 id="请求链路"><a href="#请求链路" class="headerlink" title="请求链路"></a>请求链路</h1><h1 id="响应链路"><a href="#响应链路" class="headerlink" title="响应链路"></a>响应链路</h1>
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-       
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/07/Golang并发模型/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/default.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="flyfish's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2020/09/07/Golang并发模型/" class="post-title-link" itemprop="http://yoursite.com/page/2/index.html">Golang并发模型</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2020-09-07 22:51:45" itemprop="dateCreated datePublished" datetime="2020-09-07T22:51:45+08:00">2020-09-07</time>
-            
-
-            
-              
-
-              
-                
-                <span class="post-meta-divider">|</span>
-                
-
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                
-                  <span class="post-meta-item-text">更新于</span>
-                
-                <time title="修改时间：2020-10-27 09:22:52" itemprop="dateModified" datetime="2020-10-27T09:22:52+08:00">2020-10-27</time>
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/Golang/" itemprop="url" rel="index"><span itemprop="name">Golang</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <blockquote>
-<p>Do not communicate by sharing memory; instead, share memory by communicating.</p>
-</blockquote>
-<h2 id="一-Channel底层原理"><a href="#一-Channel底层原理" class="headerlink" title="一. Channel底层原理"></a>一. Channel底层原理</h2><h2 id="二-Golang的GPM模型"><a href="#二-Golang的GPM模型" class="headerlink" title="二. Golang的GPM模型"></a>二. Golang的GPM模型</h2><ol>
-<li>G: goroutine, </li>
-<li>M: 内核线程</li>
-<li>P: 代表一个虚拟的处理器(Processor), 它维护一个Runnable的<code>g</code>队列, M需要获得P才能运行G</li>
-</ol>
-<h3 id="2-1-为什么需要P"><a href="#2-1-为什么需要P" class="headerlink" title="2.1 为什么需要P"></a>2.1 为什么需要P</h3><p>在Go的早期版本, 并没有P这个结构, M需要从一个全局的队列中获得可运行的goroutine, 因此需要一个全局的锁. 当并发量大的时候, 锁就成了瓶颈. 那么为什么不直接将runqueue放入M中?</p>
-<blockquote>
-<p>You might wonder now, why have contexts at all? Can’t we just put the runqueues on the threads and get rid of contexts? Not really. The reason we have contexts is so that we can hand them off to other threads if the running thread needs to block for some reason.<br>An example of when we need to block, is when we call into a syscall. Since a thread cannot both be executing code and be blocked on a syscall, we need to hand off the context so it can keep scheduling.</p>
-</blockquote>
-<p>即: 当一个线程被阻塞, 可以将该线程等待的可运行的G转移到其他空闲的M上面<br>另外, Go scheduler 会启动一个后台线程 sysmon，用来检测长时间（超过 10 ms）运行的 goroutine，将其调度到 global runqueues. 这是一个全局的 runqueue，优先级比较低.</p>
-<h2 id="last-其他概念"><a href="#last-其他概念" class="headerlink" title="last. 其他概念"></a>last. 其他概念</h2><ol>
-<li>超线程: 多线程处理器内部的两个逻辑内核模拟成两个物理芯片，让单个处理器就能使用线程级的并行计算，进而兼容多线程操作系统和软件. </li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-       
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/06/13/基于FFmpeg的视频水印处理方案/">
-
-    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="flyfish">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/default.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="flyfish's blog">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                
-                <a href="/2020/06/13/基于FFmpeg的视频水印处理方案/" class="post-title-link" itemprop="http://yoursite.com/page/2/index.html">基于FFmpeg的视频水印处理方案</a>
-              
-            
-          </h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-
-            
-            
-            
-
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-
-              
-                
-              
-
-              <time title="创建时间：2020-06-13 16:13:04 / 修改时间：20:41:48" itemprop="dateCreated datePublished" datetime="2020-06-13T16:13:04+08:00">2020-06-13</time>
-            
-
-            
-              
-
-              
-            
-          </span>
-
-          
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/视频处理/" itemprop="url" rel="index"><span itemprop="name">视频处理</span></a></span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="一-背景"><a href="#一-背景" class="headerlink" title="一. 背景"></a>一. 背景</h2><blockquote>
-<p>因政策需要, 五月底收到了一个应急视频水印的需求, 需要对下游生产出来的视频在转码之前进行加水印的处理, 来对视频的<strong>不同片段</strong>进行标记</p>
-</blockquote>
-<h2 id="二-所需工具"><a href="#二-所需工具" class="headerlink" title="二. 所需工具"></a>二. 所需工具</h2><h3 id="1-FFmpeg"><a href="#1-FFmpeg" class="headerlink" title="1. FFmpeg"></a>1. FFmpeg</h3><blockquote>
-<p>FFmpeg我们使用的是<a href="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz" target="_blank" rel="noopener">ffmpeg v4.2.3-static</a>, 新版本的FFmpeg自带加水印功能, 老版本的可能需要自己编译</p>
-</blockquote>
-<h3 id="2-Linux字体支持"><a href="#2-Linux字体支持" class="headerlink" title="2. Linux字体支持"></a>2. Linux字体支持</h3><ol>
-<li>安装fontconfig <code>yum install fontconfig</code>,</li>
-<li>将字体文件放入<code>/usr/share/fonts/chinese</code>目录中</li>
-<li>执行<code>fc-list :lang=zh</code>就可以看到安装好的字体文件</li>
-</ol>
-<h3 id="3-ass-srt-字幕文件"><a href="#3-ass-srt-字幕文件" class="headerlink" title="3. ass(srt)字幕文件"></a>3. ass(srt)字幕文件</h3><h2 id="三-FFmpeg加水印解决方案"><a href="#三-FFmpeg加水印解决方案" class="headerlink" title="三. FFmpeg加水印解决方案"></a>三. FFmpeg加水印解决方案</h2><h3 id="1-加图片水印"><a href="#1-加图片水印" class="headerlink" title="1. 加图片水印"></a>1. 加图片水印</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -i watermark.png -filter_complex <span class="string">"overlay=x=main_w-overlay_w:y=main_h-overlay_h"</span> pic_watermark.mp4</span><br></pre></td></tr></table></figure>
-<p>水印的位置由如下六个参数来界定.<br>图片水印的优点是水印的格式(字体,颜色,透明度等)可以由UI老师提前生成, 不用执行命令时去控制<br>但是这种水印方式加出来都是整个视频都加上了水印, 如果想要控制某个时间区间去加水印, 不太好控制. 这样也就无法满足本次需求, pass. </p>
-<ul>
-<li>main_h为输入视频的高度, </li>
-<li>main_w为输入视频的宽度, </li>
-<li>overlay_h为传入图片的高度, </li>
-<li>overlay_w为传入图片的宽度,</li>
-<li>x为水印左边界与视频左边界的距离</li>
-<li>y为水印上边界与视频上边界的距离</li>
-</ul>
-<p>加完水印的效果如下图<br><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/pic_watermark.png" alt="image.png"></p>
-<h3 id="2-加字幕水印-srt"><a href="#2-加字幕水印-srt" class="headerlink" title="2. 加字幕水印[srt]"></a>2. 加字幕水印[srt]</h3><blockquote>
-<p>图片水印无法满足需求, 我们再寻找其他解决方案的时候发现<strong>给视频多个时间区间加水印</strong>与<strong>电影字幕</strong>比较类似, 于是开始寻找给视频加字幕的解决方案. </p>
-</blockquote>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -vf subtitles=watermark.srt srt_watermark.mp4</span><br></pre></td></tr></table></figure>
-<p>字幕内容<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">1</span><br><span class="line">00:00:16,266 --&gt; 00:01:00,359</span><br><span class="line">FFMPEG</span><br><span class="line"></span><br><span class="line">2</span><br><span class="line">00:01:16,266 --&gt; 00:10:25,359</span><br><span class="line">FFMPEG</span><br></pre></td></tr></table></figure></p>
-<p>加出来的效果如下图, 这种方式可以解决按时间区间加水印的需求, 但是无法指定字幕格式, 无法指定字幕位置, 就是单纯的电影字幕(至少我没找到🤦‍♂️). 这种方式也无法满足需求, pass.<br><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/srt.png" alt="image.png"></p>
-<h3 id="3-加字幕水印-ass"><a href="#3-加字幕水印-ass" class="headerlink" title="3. 加字幕水印[ass]"></a>3. 加字幕水印[ass]</h3><p>ass字幕文件加水印可以定制很多个性化的东西, 话不多说, 上命令</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ffmpeg -i origin.mp4 -vf <span class="string">"ass=watermark.ass"</span> ass_watermark.mp4</span><br></pre></td></tr></table></figure>
-<p>字幕文件内容为:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">[Script Info]</span><br><span class="line">Title: YYeTs</span><br><span class="line">Original Script: YYeTs</span><br><span class="line">Original Translation:</span><br><span class="line">Original Timing:</span><br><span class="line">Original Editing:</span><br><span class="line">Script Updated By:</span><br><span class="line">Update Details:</span><br><span class="line">ScriptType: v4.00+</span><br><span class="line">PlayResX: 384</span><br><span class="line">PlayResY: 288</span><br><span class="line">Timer: 100.0000</span><br><span class="line">Synch Point: 0</span><br><span class="line">WrapStyle: 0</span><br><span class="line">ScaledBorderAndShadow: no</span><br><span class="line"></span><br><span class="line">[Aegisub Project Garbage]</span><br><span class="line">Scroll Position: 483</span><br><span class="line">Active Line: 441</span><br><span class="line"></span><br><span class="line">[V4+ Styles]</span><br><span class="line">Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding</span><br><span class="line">Style: Default,HanziPen TC,24,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00FFFFFF,&amp;H00FFFFFF,0,0,0,0,100,100,0,0,1,0,1,3,5,10,10,134</span><br><span class="line"></span><br><span class="line">[Events]</span><br><span class="line">Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text</span><br><span class="line">Dialogue: 0,0:00:00.12,0:10:34.29,Default,NTP,0,0,0,,&#123;\alpha&amp;H72&amp;&#125;大鱼海棠</span><br></pre></td></tr></table></figure></p>
-<p>Ass字幕文件比较复杂, 反正我是自己手写不出来, 这是我在网上下载了一个ass文件, 自己改了一些参数的最终样子.<br>其中第一部分<code>[Script Info]</code>和第二部分<code>[Aegisub Project Garbage]</code>的意义这里不关注,<br>第三部分<code>[V4+ Styles]</code>包含了所有样式的定义, <code>Format</code>行与<code>Style</code>行 为键值对, Format为Key, Style为Value, 可以定义多个Style, 根据Style.Name区分.<br>第四部分<code>[Events]</code>中, 依旧是Format为Key, Dialogue为每个时间区间, 字幕的各种参数, 包括起止时间, 样式, 以及文案.<br>其中一些Format.Key的意义如下</p>
-<ul>
-<li>Name: 样式的名字</li>
-<li>Fontname: 字体, 中文字体在Linux可以通过fc-list找到对应的英文名</li>
-<li>Fontsize: 字体大小</li>
-<li>PrimaryColour: 字幕颜色</li>
-<li>BackColour: 字体阴影颜色</li>
-<li>Bold: 是否加粗</li>
-<li>Italic: 是否斜体</li>
-<li>Underline: 是否下划线</li>
-<li>StrikeOut: 是否删除线</li>
-<li>ScaleX: 修改字体的宽度</li>
-<li>ScaleY: 修改字体的高度</li>
-<li>Spacing: 字符之间额外的间隙</li>
-<li>BorderStyle: 边框的样式。1 为边框 + 阴影，3 为不透明背景。</li>
-<li>Outline: 如果 BorderStyle 为 1，它定义了文字边框的像素宽度。</li>
-<li>Alignment: 字幕位置: 1,2,3 =&gt; 左下, 中下, 右下, 4,5,6 =&gt; 左中, 中中, 右中, 7,8,9=&gt; 左上, 中上, 右上</li>
-<li>MarginL: 到屏幕左边缘的距离</li>
-<li>MarginR: 到屏幕右边缘的距离</li>
-<li>MarginV: 屏幕垂直距离, 如果是底部字幕, 则是屏幕底部的距离</li>
-<li>Encoding: 定义字体的字符集或编码方式=&gt;0 为英文，134 为简体中文，136 为繁体中文</li>
-<li>样式覆写代码: 样式直接指定透明度试了很多次都不成功, 只好使用样式覆写代码来满足透明度的需求. {\alpha&amp;H72&amp;}为样式覆写代码, 可以重置样式, alpha指定透明度, 72/256=28% , 大概28%的透明度</li>
-</ul>
-<p>水印效果如下, 用的Mac自带的<code>翩翩体-简</code>, 右下, 底部10, 右屏幕10<br><img src="/2020/06/13/基于FFmpeg的视频水印处理方案/ass.png" alt="image.png"></p>
-<h2 id="四-参考资料"><a href="#四-参考资料" class="headerlink" title="四. 参考资料"></a>四. 参考资料</h2><ol>
-<li><a href="https://moejj.com/ffmpeg-add-subtitles-and-watermark/" target="_blank" rel="noopener">ffmpeg同时添加水印和字幕，详细教程</a></li>
-<li><a href="https://github.com/weizhenye/ASS/wiki/ASS-%E5%AD%97%E5%B9%95%E6%A0%BC%E5%BC%8F%E8%A7%84%E8%8C%83" target="_blank" rel="noopener">ASS 字幕格式规范</a></li>
-</ol>
-
-          
-        
-      
-    </div>
-
-    
-
-    
-    
-    
-
-    
-
-    
-       
-    
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  
-
-  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/05/26/Golang常见错误/">
 
     <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
@@ -1095,7 +471,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2020-05-29 23:41:22" itemprop="dateModified" datetime="2020-05-29T23:41:22+08:00">2020-05-29</time>
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
               
             
           </span>
@@ -1270,7 +646,7 @@
                 
                   <span class="post-meta-item-text">更新于</span>
                 
-                <time title="修改时间：2020-05-26 00:30:54" itemprop="dateModified" datetime="2020-05-26T00:30:54+08:00">2020-05-26</time>
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
               
             
           </span>
@@ -1443,12 +819,24 @@
                 
               
 
-              <time title="创建时间：2019-03-06 19:35:17 / 修改时间：19:39:38" itemprop="dateCreated datePublished" datetime="2019-03-06T19:35:17+08:00">2019-03-06</time>
+              <time title="创建时间：2019-03-06 19:35:17" itemprop="dateCreated datePublished" datetime="2019-03-06T19:35:17+08:00">2019-03-06</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
               
             
           </span>
@@ -1628,12 +1016,24 @@ update[3]-&gt;level[3].span=(rank[0]-rank[3])+1=2
                 
               
 
-              <time title="创建时间：2019-03-05 11:56:29 / 修改时间：15:33:14" itemprop="dateCreated datePublished" datetime="2019-03-05T11:56:29+08:00">2019-03-05</time>
+              <time title="创建时间：2019-03-05 11:56:29" itemprop="dateCreated datePublished" datetime="2019-03-05T11:56:29+08:00">2019-03-05</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
               
             
           </span>
@@ -1828,12 +1228,24 @@ h&amp;sizemask获得一个可以存储在hashtable中的一个桶的下标.
                 
               
 
-              <time title="创建时间：2019-02-28 18:41:08 / 修改时间：19:21:57" itemprop="dateCreated datePublished" datetime="2019-02-28T18:41:08+08:00">2019-02-28</time>
+              <time title="创建时间：2019-02-28 18:41:08" itemprop="dateCreated datePublished" datetime="2019-02-28T18:41:08+08:00">2019-02-28</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
               
             
           </span>
@@ -2035,12 +1447,24 @@ this is amazing!!!
                 
               
 
-              <time title="创建时间：2019-02-28 15:55:16 / 修改时间：15:58:34" itemprop="dateCreated datePublished" datetime="2019-02-28T15:55:16+08:00">2019-02-28</time>
+              <time title="创建时间：2019-02-28 15:55:16" itemprop="dateCreated datePublished" datetime="2019-02-28T15:55:16+08:00">2019-02-28</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
               
             
           </span>
@@ -2209,12 +1633,24 @@ va_arg返回这个参数的值，并使var_arg指向下一个可变参数。
                 
               
 
-              <time title="创建时间：2019-02-28 15:26:12 / 修改时间：15:37:02" itemprop="dateCreated datePublished" datetime="2019-02-28T15:26:12+08:00">2019-02-28</time>
+              <time title="创建时间：2019-02-28 15:26:12" itemprop="dateCreated datePublished" datetime="2019-02-28T15:26:12+08:00">2019-02-28</time>
             
 
             
               
 
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
               
             
           </span>
@@ -2350,6 +1786,847 @@ __attribute__((destructor(PRIORITY)))
 
 
     
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/28/APUE-阅读笔记-第八章-进程控制/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/02/28/APUE-阅读笔记-第八章-进程控制/" class="post-title-link" itemprop="http://yoursite.com/page/2/index.html">APUE 阅读笔记 第八章 进程控制</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-28 10:38:47" itemprop="dateCreated datePublished" datetime="2019-02-28T10:38:47+08:00">2019-02-28</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="APUE-第八章-进程控制"><a href="#APUE-第八章-进程控制" class="headerlink" title="APUE 第八章 进程控制"></a>APUE 第八章 进程控制</h2><h3 id="8-1-引言"><a href="#8-1-引言" class="headerlink" title="8.1 引言"></a>8.1 引言</h3><pre><code>本章内容:
+    1. 创建新进程, 执行程序和进程终止
+    2. 说明进程属性的各种ID-实际,有效和保存的用户ID和组ID.
+    3. 如何受到进程控制原语的影响
+    4. 解释器文件和system函数
+</code></pre><h3 id="8-2-进程标识"><a href="#8-2-进程标识" class="headerlink" title="8.2 进程标识"></a>8.2 进程标识</h3><pre><code>每个进程都有一个非负整型表示的唯一进程ID. 
+但同时也是可以服用的, 当进程终止后, 其进程ID就成为服用的候选者, 采用延迟复用算法
+ID为0 的进程通常是调度进程, 被称为交换进程
+ID为1 的进程通常是init进程, 在自举结束时由内核调用, 负责启动一个UNIX系统. 是一个普通用户进程, 但是由超级用户特权运行.ssh
+在某些UNIX系统的虚拟存储器实现中, 进程ID2是页守护进程, 此进程负责支持虚拟存储器系统.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> getpid(); <span class="comment">// 返回进程ID</span></span><br><span class="line"><span class="keyword">pid_t</span> getppid(); <span class="comment">// 返回父进程ID</span></span><br><span class="line"><span class="keyword">uid_t</span> getuid(); <span class="comment">// 返回进程的用户ID</span></span><br><span class="line"><span class="keyword">uid_t</span> geteuid();<span class="comment">// 返回进程的有效用户ID</span></span><br><span class="line"><span class="keyword">gid_t</span> getgid(); <span class="comment">// 返回进程的组ID</span></span><br><span class="line"><span class="keyword">gid_t</span> getegid(); <span class="comment">// 返回进程的有效组ID</span></span><br></pre></td></tr></table></figure>
+<h3 id="8-3-函数fork"><a href="#8-3-函数fork" class="headerlink" title="8.3 函数fork"></a>8.3 函数fork</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> fork(<span class="keyword">void</span>);</span><br></pre></td></tr></table></figure>
+<pre><code>由函数fork创建的新进程被称为子进程. fork函数被调用一次, 但是返回两次.
+两次返回的区别是子进程的返回值是0, 而父进程的返回值则是子进程的进程ID. 
+子进程和父进程继续执行fork调用之后的指令, 子进程是父进程的副本. 共享正文段, 但是并不共享堆栈和数据空间
+</code></pre><p><strong>写时复制</strong></p>
+<pre><code>父进程的数据段, 堆栈由子进程和父进程共享, 但此时内核将他们的访问权限改为只读. 如果父进程和子进程中的任一个试图修改这个区域, 则内核只为修改区域的那块内存制作一个副本. 
+</code></pre><p><strong>文件共享</strong></p>
+<pre><code>fork的一个特征是父进程的所有打开的文件描述符都被复制到子进程中. 就好像执行了dup函数. 
+重要的是, 子进程和父进程共享同一个文件偏移量. 
+</code></pre><p><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./文件共享.png" alt="Alt text"></p>
+<p><strong>其他继承</strong></p>
+<pre><code>1. 实际用户ID, 实际组ID, 有效用户ID, 有效组ID
+2. 附属组ID
+3. 进程组ID
+4. 会话ID
+5. 控制终端
+6. 设置用户ID标志和设置组ID标志
+7. 当前工作目录
+8. 根目录
+9. 文件创建屏蔽字
+10. 信号屏蔽和安排
+11. 对任一打开文件描述符执行时关闭标志
+12. 环境
+13. 连接的共享存储段
+14. 存储映像
+15. 资源限制
+</code></pre><p><strong>子进程和父进程的区别</strong></p>
+<pre><code>1. fork返回值不同
+2. 进程ID不同, 父进程ID不同
+3. 子进程的tms_utime,tms_stime,tms_cutime和tms_ustime的值被设置为0
+4. 子进程不继承父进程设置的文件锁
+5. 子进程的未处理闹钟被清除
+6. 子进程的未处理信号集被设置为空集
+</code></pre><h3 id="8-4-函数vfork"><a href="#8-4-函数vfork" class="headerlink" title="8.4 函数vfork"></a>8.4 函数vfork</h3><pre><code>vfork函数用于创建一个新进程, 而该新进程的目的是exec一个新的程序. 
+但是并不将父进程的地址空间完全复制到子进程中., 但是在子进程调用用exec或者 exit之前,
+在父进程的空间中运行. 但是如果修改数据, 进行函数调用,
+或者没有调用exec或者exit就返回就可能带来未知的结果
+vfork保证子进程先运行. 调用exit或者exec之后, 父进程 才可能被调度运行.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> globval = <span class="number">6</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> var;</span><br><span class="line">    <span class="keyword">pid_t</span> pid;</span><br><span class="line">    var = <span class="number">88</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"before vfork\n"</span>);</span><br><span class="line">    <span class="keyword">if</span> ((pid = vfork()) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"vfork error"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</span><br><span class="line">        globval++;</span><br><span class="line">        var++;</span><br><span class="line">        _exit(<span class="number">0</span>);  <span class="comment">// 此处如果调用exit, 结果是不确定的.因为依赖于标准IO库的实现</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"pid = %ld, glob = %d, var = %d\n"</span>, (<span class="keyword">long</span>)getpid(), globval, var);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="8-5-函数exit"><a href="#8-5-函数exit" class="headerlink" title="8.5 函数exit"></a>8.5 函数exit</h3><p><strong>正常终止</strong></p>
+<pre><code>1. 调用return 0, 相当于调用exit(0) 
+2. 调用exit 函数, 其操作包括调用各终止处理程序(atexit), 关闭所有标准IO流.
+3. 调用_exit或者_Exit函数, 目的是为进程提供一种无需运行终止处理程序或信号处理程序而终止的方法. 在UNIX中,_exit和_Exit是同义的, 并不冲洗标准IO流
+4. 进程的最后一个线程在其启动例程中执行return语句, 但是该线程的返回值不作为进程的返回值.
+5. 进程的最后一个线程调用pehread_exit函数, 这种情况下,进程的终止状态总是0. 
+</code></pre><p><strong>异常终止</strong></p>
+<pre><code>1. 调用abort, 产生SIGABRT信号, 这是下一种异常终止的一种特例
+2. 接收到一个信号. 信号可以由进程自身, 其他进程或者内核产生.
+3. 最后一个线程对取消请求做出响应. 默认情况下,取消以延迟方式发生: 一个线程要求取消另一个线程, 若干时间后, 目标线程终止.
+
+不管进程如何终止, 都会执行内核中的同一段代码, 这段代码为相应进程关闭所有打开的文件描述符. 释放它所使用的存储器. 
+</code></pre><p><strong>终止通知父进程</strong></p>
+<pre><code>对于三个终止函数, 将其退出状态作为参数传递给函数. 异常终止时, 内核产生一个指示其异常终止原因的终止状态.
+在任意一种情况下, 该终止进程的父进程都能用wait或者waitpid函数取得其终止状态.
+如果子进程`完全消失`了, 那么父进程是无法获取终止状态的.
+实际上内核为每个终止进程保存了一定量的信息, 所以当终止进程的父进程调用wait或者waitpid时, 可以得到这些信息. 
+这些信息至少包括进程ID, 该进程的终止状态,以及该进程使用的CPU时间总量.
+</code></pre><p><strong>僵死进程</strong></p>
+<pre><code>一个已经终止, 但是其父进程尚未对其进行善后处理的进程被称为僵死进程
+善后处理包括: 获取终止子进程的有关信息, 释放它的资源
+</code></pre><p><strong>父进程终止</strong></p>
+<pre><code>对于父进程已经终止的所有进程, 他们的父进程都改变为init进程. 我们称被init进程收养
+当一个进程终止是, 内核逐个检查所有的活动进程, 以判断它是否是要终止进程的子进程, 如果是,该 进程的父进程ID就改为1
+</code></pre><h3 id="8-6-函数wait和waitpid"><a href="#8-6-函数wait和waitpid" class="headerlink" title="8.6 函数wait和waitpid"></a>8.6 函数wait和waitpid</h3><pre><code>当一个进程正常或者异常终止时, 内核就向其父进程发送SIGCHLD信号.
+因为子进程终止是一个异步事件, 所以这总信号也是内核向父进程发的异步通知. 
+父进程可以选择忽略该信号, 或者提供一个该信号发生时即被调用执行的函数.
+调用wait或者waitpid会发生什么: 
+1. 如果其所有子进程都还在运行, 则阻塞
+2. 如果一个子进程已终止, 正等待父进程获取其终止装填, 则取得该子进程的终止状态立即返回
+3. 如果它没有任何子进程, 则立即出错返回
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="keyword">pid_t</span> wait(<span class="keyword">int</span> *statloc);</span><br><span class="line"><span class="keyword">pid_t</span> waitpid(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *statloc, <span class="keyword">int</span> options);</span><br></pre></td></tr></table></figure>
+<pre><code>statloc 是一个整型指针, 如果说statloc不是一个空指针,
+则终止进程的终止状态就存放在它所指向的单元内. 
+</code></pre><p><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./wait.png" alt="Alt text"></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">pr_exit</span><span class="params">(<span class="keyword">int</span> status)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (WIFEXITED(status)) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"normal termination, exit status = %d\n"</span>, WEXITSTATUS(status));</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (WIFSIGNALED(status)) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"abnormal termination, signal num = %d %s\n"</span>, WTERMSIG(status),</span><br><span class="line">#ifdef WCOREDUMP</span><br><span class="line">               WCOREDUMP(status) ? <span class="string">"(core file generated)"</span> : <span class="string">""</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">               <span class="string">""</span>);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (WIFSTOPPED(status)) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"child stoped, signal number = %d\n"</span>, WSTOPSIG(status));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">pid_t</span> pid;</span><br><span class="line">    <span class="keyword">int</span> status;</span><br><span class="line">    <span class="keyword">if</span> ((pid = fork()) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"fork error"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">exit</span>(<span class="number">7</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (wait(&amp;status) != pid) &#123;</span><br><span class="line">        err_sys(<span class="string">"wait error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    pr_exit(status);</span><br><span class="line">    <span class="keyword">if</span> ((pid = fork()) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"fork error"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">abort</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (wait(&amp;status) != pid) &#123;</span><br><span class="line">        err_sys(<span class="string">"wait error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    pr_exit(status);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((pid = fork()) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        err_sys(<span class="string">"fork error"</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (pid == <span class="number">0</span>) &#123;</span><br><span class="line">        status /= <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (wait(&amp;status) != pid) &#123;</span><br><span class="line">        err_sys(<span class="string">"wait error"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    pr_exit(status);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>waitpid</strong></p>
+<pre><code>pid==-1 等待任一个子进程
+pi &gt; 0 等待进程ID和pid相等的子进程
+pid==0 等待组ID等于调用进程组ID的任一子进程
+pid&lt; -1 等待组ID等于pid绝对值的任一进程
+
+option 是我们进一步控制waitpid的操作, 此参数或者是0, 或者是下图常量按位或运算的结果
+</code></pre><p><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./wait_option.png" alt="Alt text"></p>
+<h3 id="8-7-函数waitpid"><a href="#8-7-函数waitpid" class="headerlink" title="8.7 函数waitpid"></a>8.7 函数waitpid</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">waitid</span><span class="params">(<span class="keyword">idtype_t</span> idtype, <span class="keyword">id_t</span> id, <span class="keyword">siginfo_t</span> *infop, <span class="keyword">int</span> options)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>waitid 允许一个进程指定要等待的子进程. 
+但它使用两个独立的参数标识要等待的子进程所属的类型,而不是将此与进程ID或者进程组ID组合成一个参数. 
+id参数的作用于idtype的值有关, 该函数支持的IDtype类型的值如下
+</code></pre><p><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./waitid.png" alt="Alt text"></p>
+<pre><code>option参数是下图各标志的按位或运算.
+</code></pre><p><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./waitid_option.png" alt="Alt text"></p>
+<pre><code>WCONTINUED, WEXITED或者WSTOPPED三个常量之一必须在options参数中指定.
+info参数是指向siginfo结构的指针, 该结构包含了造成子进程状态改变有关信号的详细信息
+</code></pre><h3 id="8-8-函数wait3或者函数wait4"><a href="#8-8-函数wait3或者函数wait4" class="headerlink" title="8.8 函数wait3或者函数wait4"></a>8.8 函数wait3或者函数wait4</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;resource.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">pid_t</span> wait3(<span class="keyword">int</span> *statloc, <span class="keyword">int</span> options, struct rusage *rusage);</span><br><span class="line"><span class="keyword">pid_t</span> wait4(<span class="keyword">pid_t</span> pid, <span class="keyword">int</span> *statloc, <span class="keyword">int</span> options, struct rusage *rusage);</span><br></pre></td></tr></table></figure>
+<pre><code>比wait和waitpid的功能多一个, 这与附加参数有关. 
+该附加参数允许内核返回由终止进程以及其所有子进程使用的资源概况
+资源概况包括: 用户CPU时间总量, 系统CPU时间总量, 缺页次数, 接收到信号的次数等. 
+具体看 `man getrusage`
+</code></pre><h3 id="8-9-竞争条件"><a href="#8-9-竞争条件" class="headerlink" title="8.9 竞争条件"></a>8.9 竞争条件</h3><pre><code>当多个进程都企图对共享数据进行某种处理, 而最后的结果又取决于进程运行的顺利时, 我们就认为发生了竞争条件. 
+如果子进程需要等待父进程结束, 可以使用以下方法
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span>(getpid() != <span class="number">1</span>)&#123; <span class="comment">// 父进程结束, 子进程的父进程变为init进程</span></span><br><span class="line">    sleep(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>也可以使用信号机制/进程间通信
+</code></pre><h3 id="8-10-函数exec"><a href="#8-10-函数exec" class="headerlink" title="8.10 函数exec"></a>8.10 函数exec</h3><pre><code>8.3节提到的fork函数创建新的子进程后, 子进程往往要调用一种exec函数一遍执行另一个程序. 
+当进程调用一种exec函数, 该进程执行的程序完全替换为新程序, 而新程序则从其main函数开始执行. 
+exec并不创建新进程, 所有前后的进程ID并未改变. 
+有7个不用的exec函数可以供使用. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execl</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">const</span> <span class="keyword">char</span> *arg0, ... )</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">char</span> *<span class="keyword">const</span> argv[])</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execle</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, <span class="keyword">const</span> <span class="keyword">char</span> *arg0, ...)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execve</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *pathname, , <span class="keyword">char</span> *<span class="keyword">const</span> argv[], <span class="keyword">char</span> *<span class="keyword">const</span> envp[])</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execlp</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *filename, <span class="keyword">const</span> <span class="keyword">char</span> *arg0, .. )</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">execvp</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *filename, <span class="keyword">char</span> *<span class="keyword">const</span> argv[])</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">fexecve</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">char</span> *<span class="keyword">const</span> argv[], <span class="keyword">char</span> *<span class="keyword">const</span> envp[])</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>第一个区别</strong></p>
+<pre><code>当指定filename作为参数时: 
+1. 如果filename中包含/ , 则就将其视为路径名
+2. 否则就按PATH环境变量, 在它指定的各目录中搜寻可执行文件
+
+如果execlp和execvp使用路径前缀中的一个找到了一个可执行文件,
+但是该文件不是由连接编辑器产生的机器可执行文件, 则就认为该文件是一个shell脚本.
+于是试着调用/bin/sh, 并以filename 作为shell的输入.
+</code></pre><hr>
+<p><strong>第二个区别</strong></p>
+<pre><code>参数表的传递, l表示列表, v表示vector. 
+函数execl,execlp和execle要求将新程序的每个命令行参数都说明为一个单独的参数. 这种参数表以空指针结尾.
+对于另外的四个函数, 则应该先构造出一个指向各参数的指针数组, 然后将该数组地址作为这四个函数的参数
+</code></pre><hr>
+<p><strong>第三个区别</strong></p>
+<pre><code>最后一个区别与想新程序传递环境表相关. 
+以e结尾的三个函数, 可以传递一个纸箱环境字符串指针数组的指针. 
+其他四个函数则使用调用过程中的environ变量为新程序复制现有的环境.
+</code></pre><hr>
+<pre><code>前面提及, 在执行exec后, 进程ID没有改变, 但是新程序从调用进程继承了下列属性:
+1. 进程ID和父进程ID
+2. 实际用户ID和实际组ID
+3. 附属组ID
+4. 进程组ID
+5. 会话ID
+6. 控制终端
+7. 闹钟尚余留的时间
+8. 当前工作目录
+9. 根目录
+10. 文件模式创建屏蔽字
+11. 文件锁
+12. 进程信号屏蔽
+13. 未处理信号
+14. 资源限制
+15. nice值
+16. tms_utime,tms_stime,tms_cutime和tms_ustime的值
+</code></pre><hr>
+<p><strong>FD_CLOEXEC标志(3.14)</strong></p>
+<pre><code>进程中每个打开文件描述符都有一个执行时关闭标志. 若设置了该标志, 则在执行exec时关闭该描述符, 否则该描述符仍然打开. 
+</code></pre><hr>
+<p><strong>设置用户/组ID</strong></p>
+<pre><code>实际用户ID和实际组ID保持不变. 而有效ID是否改变取决于所执行程序文件的设置用户ID位和设置组ID位是否设置. (参见4.4)
+</code></pre><hr>
+<p><strong>七个函数之间的关系</strong><br><img src="/2019/02/28/APUE-阅读笔记-第八章-进程控制/./exec.png" alt="Alt text"></p>
+<h3 id="8-11-更改用户ID和更改组ID"><a href="#8-11-更改用户ID和更改组ID" class="headerlink" title="8.11 更改用户ID和更改组ID"></a>8.11 更改用户ID和更改组ID</h3><pre><code>一般而言, 在设计应用时, 我们总是试图使用最小特权模型. 程序应当只有为完成给定任务所需的最小特权.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setuid</span><span class="params">(<span class="keyword">uid_t</span> uid)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setgid</span><span class="params">(<span class="keyword">gid_t</span> gid)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>1. 若进程拥有超级用户权限, 则setuid函数将实际用户ID, 有效用户ID以及保存的设置用户ID设置为uid
+2. 若进程没有超级用户特权, 但是uid等于实际用户ID或保存的设置用户ID, 则setuid只将有效用户ID设置为uid, 不更改实际用户ID和保存的设置用户ID
+3. 如果上面两个条件都不满足, 则errno设置为EPERM, 并返回-1
+</code></pre><p><strong>函数setreuid和setregid</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setreuid</span><span class="params">(<span class="keyword">uid_t</span> ruid, <span class="keyword">uid_t</span> euid)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setregid</span><span class="params">(<span class="keyword">gid_t</span> rgid, <span class="keyword">gid_t</span> egid)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>其功能是交换有效用户ID和实际用户ID
+</code></pre><p><strong>函数seteuid和setegid</strong><br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">seteuid</span><span class="params">(<span class="keyword">uid_t</span> uid)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setegid</span><span class="params">(<span class="keyword">gid_t</span> gid)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<pre><code>类似于setuid和setgid, 但是只更改有效用户ID和有效组ID
+</code></pre><h3 id="8-12-解释器文件"><a href="#8-12-解释器文件" class="headerlink" title="8.12 解释器文件"></a>8.12 解释器文件</h3><pre><code>没什么好写的
+</code></pre><h3 id="8-13-函数system"><a href="#8-13-函数system" class="headerlink" title="8.13 函数system"></a>8.13 函数system</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">system</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *cmdstring)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>如果cmdstring是一个空指针, 那么返回非0值
+system在其实现中调用了fork, exec, waitpid, 因此有三种返回值
+1. fork失败或者waitpid返回除了EINTR之外的错误, 则system返回-1, 并且设置errno以指示错误类型.
+2. 如果exec失败, 则其返回值如同shell执行了exit(127)一样
+3. 否则三个函数都执行成功, 返回值是shell的终止状态(在waitpid中已经说明)
+</code></pre><h3 id="8-14-进程会计"><a href="#8-14-进程会计" class="headerlink" title="8.14 进程会计"></a>8.14 进程会计</h3><pre><code>大多数UNIX系统都提供了一个选项️以进行进程会计处理. 启用该选项后,每当进程结束时内核就写一个会计记录.
+</code></pre><h3 id="8-15-用户标识"><a href="#8-15-用户标识" class="headerlink" title="8.15 用户标识"></a>8.15 用户标识</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">getlogin</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="8-16-进程调度"><a href="#8-16-进程调度" class="headerlink" title="8.16 进程调度"></a>8.16 进程调度</h3><pre><code>UNIX历史上对于进程提供的只是基于调度优先级的粗粒度的控制. 
+调度策略和调度优先级是由内核确定的, 进程可以通过调整nice值选择以更低优先级运行.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">nice</span><span class="params">(<span class="keyword">int</span> incr)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>进程使用nice函数获取或者更改它的nice值, 进程只能影响到自己的值, 不能影响到其他的进程.
+incr参数被增加到调用进程的nice值上面, 如果incr太大/太小, 系统直接把它降到最大/最小合法值, 不给出提示.  由于-1是合法的成功返回值, 所以调用之前需要清除errno. 
+</code></pre><p><strong>获取一组相关进程的nice值</strong><br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getpriority</span><span class="params">(<span class="keyword">int</span> which, <span class="keyword">id_t</span> who)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<pre><code>which参数可以取一下三个值之一: 
+1. PRIO_PROCESS 标识进程
+2. PRIO_PGRP 标识进程组
+3. PRIO_USER 标识用户ID
+如果which作用于多个进程,返回优先级最高的. 
+</code></pre><p><strong>设置一组相关进程的nice值</strong><br><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setpriority</span><span class="params">(<span class="keyword">int</span> which, <span class="keyword">id_t</span> who, <span class="keyword">int</span> value)</span></span>;</span><br></pre></td></tr></table></figure></p>
+<h3 id="8-17进程时间"><a href="#8-17进程时间" class="headerlink" title="8.17进程时间"></a>8.17进程时间</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/times.h&gt;</span></span></span><br><span class="line"><span class="keyword">clock_t</span> times(struct tms *buf);</span><br></pre></td></tr></table></figure>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/19/APUE-阅读笔记-第七章-进程环境/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/02/19/APUE-阅读笔记-第七章-进程环境/" class="post-title-link" itemprop="http://yoursite.com/page/2/index.html">APUE 阅读笔记 第七章 进程环境</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-19 17:35:05" itemprop="dateCreated datePublished" datetime="2019-02-19T17:35:05+08:00">2019-02-19</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="第七章-进程环境"><a href="#第七章-进程环境" class="headerlink" title="第七章 进程环境"></a>第七章 进程环境</h2><h3 id="7-1-引言"><a href="#7-1-引言" class="headerlink" title="7.1 引言"></a>7.1 引言</h3><pre><code>本章内容: 
+    1. 进程执行时,其main函数是如何被调用的.
+    2. 命令行参数是如何传递给新程序的
+    3. 典型的存储空间布局是什么样子的
+    4. 如何分配另外的存储空间
+    5. 进程如何使用环境变量
+    6. 进程的各种不同终止方案
+</code></pre><h3 id="7-2-main函数"><a href="#7-2-main函数" class="headerlink" title="7.2 main函数"></a>7.2 main函数</h3><pre><code>当内核执行c程序时(使用exec执行), 在调用main函数前先调用一个特殊的启动例程.
+可执行程序文件将此启动例程指定为程序的起始地址---这是由连接编辑器设置的.
+而连接编辑器则由C编译器调用. 
+</code></pre><h3 id="7-3-进程终止"><a href="#7-3-进程终止" class="headerlink" title="7.3 进程终止"></a>7.3 进程终止</h3><p><strong>正常终止</strong></p>
+<pre><code>1. 从main函数返回
+2. 调用exit
+3. 调用_exit或者_Exit
+4. 最后一个线程从启启动例程返回
+5. 从最后一个线程调用pthread_exit
+</code></pre><p><strong>异常终止</strong></p>
+<pre><code>1. 调用abort
+2. 接收到一个信号
+3. 最后一个线程对取消请求做出响应
+</code></pre><h4 id="1-退出函数"><a href="#1-退出函数" class="headerlink" title="1. 退出函数"></a>1. 退出函数</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">exit</span><span class="params">(<span class="keyword">int</span> status)</span></span>;</span><br><span class="line"><span class="keyword">void</span> _Exit(<span class="keyword">int</span> status);</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">void</span> _exit(<span class="keyword">int</span> status);</span><br></pre></td></tr></table></figure>
+<pre><code>exit 函数总是执行一个标准IO库的清理关闭操作: 对于所有打开流调用fclose函数. 
+即: 输出缓冲中的所有数据都被冲洗
+</code></pre><p><strong>终止状态未定义</strong></p>
+<pre><code>a. 调用以上函数不带终止状态
+b. main执行了一个无返回值的return
+c. main没有声明返回类型为整型
+</code></pre><h4 id="2-函数atexit"><a href="#2-函数atexit" class="headerlink" title="2. 函数atexit"></a>2. 函数atexit</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">atexit</span><span class="params">(<span class="keyword">void</span> (*func)(<span class="keyword">void</span>))</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>进程可以登记多到32个函数, 将由exit调用, 这些函数被称为终止处理程序
+其中, atexit函数的参数是一个函数地址, 调用该函数不需要向它传递任何参数, 也没返回值. 
+登记顺序和调用顺序相反, 登记多次也会被调用多次.
+</code></pre><p><strong>和golang中的defer类似</strong></p>
+<pre><code>如果程序调用exec函数族中的任一函数, 则将清除所有已经安装的中终止处理程序
+</code></pre><p><img src="/2019/02/19/APUE-阅读笔记-第七章-进程环境/./exec.png" alt="Alt text"></p>
+<h3 id="7-4-命令行参数"><a href="#7-4-命令行参数" class="headerlink" title="7.4 命令行参数"></a>7.4 命令行参数</h3><pre><code>没啥好写的...
+</code></pre><h3 id="7-5-环境表"><a href="#7-5-环境表" class="headerlink" title="7.5 环境表"></a>7.5 环境表</h3><pre><code>全局变量environ包含了该指针数组的地址
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">char</span> **environ</span><br></pre></td></tr></table></figure>
+<h3 id="7-6-C程序的存储空间布局"><a href="#7-6-C程序的存储空间布局" class="headerlink" title="7.6 C程序的存储空间布局"></a>7.6 C程序的存储空间布局</h3><pre><code>C程序一直由下列几部分组成:
+1. 正文段: 这是由CPU执行的机器指令部分. 只读且可共享. 
+2. 初始化`数据段`: 包含了程序中需要明确地赋初值的变量. 
+3. 未初始化数据段: 通常称为bss段. 程序开始之前, 内核将此段终端数据初始化为0或者空指针. 
+4. 栈: 自动变量以及每次函数调用时所需要保存的信息都存放在此段中. 
+5. 堆: 动态存储分配. 
+</code></pre><p><img src="/2019/02/19/APUE-阅读笔记-第七章-进程环境/./memory.png" alt="Alt text"></p>
+<h3 id="7-7-共享库"><a href="#7-7-共享库" class="headerlink" title="7.7 共享库"></a>7.7 共享库</h3><pre><code>共享库使得可执行文件中不需要包含公用的库函数, 只需要在所有进程都可以引用的存储区中保存这种库例程的一个副本.
+程序第一次执行或者第一次调用某个库函数时, 使用动态链接的方法将程序与共享库连接. 
+这减少了每个可执行文件的长度, 怎能增加了一些运行时间开销.
+另一个优点是使用库的新版本代替老版本时不需要再对使用该库的程序重新连接编辑
+使用`-static` 阻止gcc使用共享库
+</code></pre><h3 id="7-8-存储空间分配"><a href="#7-8-存储空间分配" class="headerlink" title="7.8 存储空间分配"></a>7.8 存储空间分配</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">malloc</span><span class="params">(<span class="keyword">size_t</span> size)</span></span>; </span><br><span class="line"><span class="comment">// 分配指定字节数的存储区, 初始值不确定 </span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">calloc</span><span class="params">(<span class="keyword">size_t</span> nobj, <span class="keyword">size_t</span> size)</span></span>; </span><br><span class="line"><span class="comment">//为指定数量指定长度的对象分配存储空间, 每一位(bit)都初始化为0</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> *<span class="title">realloc</span><span class="params">(<span class="keyword">void</span> *ptr, <span class="keyword">size_t</span> newsize)</span></span>;</span><br><span class="line"><span class="comment">// 增加或者减少以前分配区的长度, 可能发生拷贝, 初始值不确定</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">free</span><span class="params">(<span class="keyword">void</span> *ptr)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="7-9-环境变量"><a href="#7-9-环境变量" class="headerlink" title="7.9 环境变量"></a>7.9 环境变量</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">char</span> *<span class="title">getenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>该函数返回一个指针, 指向name=value字符串中的value,
+我们应当使用getenv从环境中去一个指定环境变量的值, 而不是直接去访问environ
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">putenv</span><span class="params">(<span class="keyword">char</span> *str)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name, <span class="keyword">const</span> <span class="keyword">char</span> *value, <span class="keyword">int</span> rewrite)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">unsetenv</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br><span class="line"><span class="comment">// 以上函数只支持部分系统</span></span><br></pre></td></tr></table></figure>
+<pre><code>1. putenv取形式为name=value的字符串将其放到环境表中, 如果name已经存在, 则删除之前的定义.
+2. setenv将name设置为value,  如果已经存在name, 且rewrite非0, 首先删除其现在的定义, 否则不删除
+3. unsetenv删除name的定义, 即使不存在这种定义也不算错误
+</code></pre><h4 id="修改环境变量导致的内存变化"><a href="#修改环境变量导致的内存变化" class="headerlink" title="修改环境变量导致的内存变化"></a>修改环境变量导致的内存变化</h4><pre><code>1. 删除字符串: 在环境表中找到该指针, 然后将所有后续指针都向环境表首部顺次移动一个位置. 
+2. 修改字符串: 
+    1. 如果新的value的长度少于或者等于现有value的长度, 则只需要将新字符串复制到原字符串所在空间中
+    2. 如果新的value的长度大于现有的value的长度, 调用malloc分配空间, 并将字符串复制到该空间, 使环境表针对name的指针指向新分配区
+3. 如果要增加一个新的name, 调用malloc为name=value的字符串分配空间, 然后将字符串复制到该空间中
+    1.  如果是第一次增加一个新name, 则必须调用malloc为新的指针表分配空间, 
+        接着, 将原来的环境表复制到新的分配区,
+        并将指向新的name=value的字符串的指针存放在该指针表的末尾,
+        然后又将一个空指针存放在其后, 最后使environ指向新指针表.
+        注意: 只复制环境表, 环境表中存储的是指针, 原来的值依旧存储在栈顶之上
+    2.  如果不是第一次增加一个新name, 只需要调用realloc
+        以分配比原空间多存放一个指针的空间, 
+        然后将指向新的name=value字符串的指针存放在该表表尾, 后面跟着一个空指针
+</code></pre><h3 id="7-10-函数setjmp和longjmp"><a href="#7-10-函数setjmp和longjmp" class="headerlink" title="7.10 函数setjmp和longjmp"></a>7.10 函数setjmp和longjmp</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setjmp</span><span class="params">(jmp_buf env)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">longjmp</span><span class="params">(jmp_buf env, <span class="keyword">int</span> val)</span></span>; </span><br><span class="line"><span class="comment">// val 用来区分不同的longjmp, val会作为setjmp的返回值</span></span><br></pre></td></tr></table></figure>
+<pre><code>用于出现错误时, 直接丢弃中间调用函数的栈帧, 直接重新回到setjmp的位置
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"></span><br><span class="line">jmp_buf jmpbuffer;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">(<span class="keyword">int</span> a)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in %d\n"</span>, a);</span><br><span class="line">    <span class="keyword">if</span> (a &gt; <span class="number">10</span>) &#123;</span><br><span class="line">        longjmp(jmpbuffer, <span class="number">1</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        func(a + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"out %d\n"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">func1</span><span class="params">(<span class="keyword">int</span> a)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in %d\n"</span>, a);</span><br><span class="line">    <span class="keyword">if</span> (a &gt; <span class="number">10</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        func1(a + <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"out %d\n"</span>, a);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    func1(<span class="number">1</span>); <span class="comment">// 普通的出错返回方式, 还需要一层一层回到被调用者函数那里, 最后才回到目的位置</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> x;</span><br><span class="line">    x = setjmp(jmpbuffer);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"setjmp %d\n"</span>, x);</span><br><span class="line">    <span class="keyword">if</span> (x != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// printf("%d error", x);</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    func(<span class="number">1</span>);<span class="comment">// 使用longjmp, 直接回到setjmp</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>自动变量(局部变量), 寄存器变量(register)和易失变量(volatile)</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;apue.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;setjmp.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f1</span><span class="params">(<span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">int</span>, <span class="keyword">int</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f2</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> jmp_buf jmpbuffer;</span><br><span class="line"><span class="keyword">static</span> <span class="keyword">int</span> globval;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> autoval;</span><br><span class="line">    <span class="keyword">register</span> <span class="keyword">int</span> regival;</span><br><span class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> volaval;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> statval;</span><br><span class="line">    globval = <span class="number">1</span>;</span><br><span class="line">    autoval = <span class="number">2</span>;</span><br><span class="line">    regival = <span class="number">3</span>;</span><br><span class="line">    volaval = <span class="number">4</span>;</span><br><span class="line">    statval = <span class="number">5</span>;</span><br><span class="line">    <span class="keyword">if</span> (setjmp(jmpbuffer) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"after longjmp:\n"</span>);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"globval = %d, autoval = %d, regival %d, volaval = %d, statval = %d\n"</span>, globval, autoval, regival, volaval, statval);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    globval = <span class="number">95</span>;</span><br><span class="line">    autoval = <span class="number">96</span>;</span><br><span class="line">    regival = <span class="number">97</span>;</span><br><span class="line">    volaval = <span class="number">98</span>;</span><br><span class="line">    statval = <span class="number">99</span>;</span><br><span class="line">    f1(autoval, regival, volaval, statval);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f1</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">int</span> j, <span class="keyword">int</span> k, <span class="keyword">int</span> l)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"in f1():\n"</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"globval = %d, autoval = %d, regival %d, volaval = %d, statval = %d\n"</span>, globval, i, j, k, l);</span><br><span class="line">    f2();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">f2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    longjmp(jmpbuffer, <span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// gcc volatile_jmp.c</span></span><br><span class="line"><span class="comment">// gcc -O volatile_jmp.c</span></span><br></pre></td></tr></table></figure>
+<pre><code>全局变量, 静态变量, 易失变量不受影响
+自动变量和寄存器变量优化前后变化
+想要不变化, 使用volatile变成易失变量
+</code></pre><h3 id="7-11-函数getrlimit和setrlimit"><a href="#7-11-函数getrlimit和setrlimit" class="headerlink" title="7.11 函数getrlimit和setrlimit"></a>7.11 函数getrlimit和setrlimit</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getrlimit</span><span class="params">(<span class="keyword">int</span> resource, struct rlimit *rlptr)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setrlimit</span><span class="params">(<span class="keyword">int</span> resource, <span class="keyword">const</span> struct rlimit *rlptr)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>每一个进程都有一组资源限制, 其中一些可以用getrlimit和setrlimit函数查询或者更改
+1. 任何一个进程都可以将一个软限制更改为小于或者等于其硬限制值
+2. 任何一个进程都可以降低硬限制值, 但是必须大于或者等于其软限制值
+3. 只有超级用户可以提高硬限制值
+</code></pre>
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope="" itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/">
+
+    <span hidden itemprop="author" itemscope="" itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="flyfish">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/default.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope="" itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="flyfish's blog">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                
+                <a href="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/" class="post-title-link" itemprop="http://yoursite.com/page/2/index.html">APUE 阅读笔记 第六章 系统数据文件和信息</a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：2019-02-18 18:19:17" itemprop="dateCreated datePublished" datetime="2019-02-18T18:19:17+08:00">2019-02-18</time>
+            
+
+            
+              
+
+              
+                
+                <span class="post-meta-divider">|</span>
+                
+
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">更新于</span>
+                
+                <time title="修改时间：2021-10-23 09:39:07" itemprop="dateModified" datetime="2021-10-23T09:39:07+08:00">2021-10-23</time>
+              
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope="" itemtype="http://schema.org/Thing"><a href="/categories/APUE阅读笔记/" itemprop="url" rel="index"><span itemprop="name">APUE阅读笔记</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="第六章-系统数据文件和信息"><a href="#第六章-系统数据文件和信息" class="headerlink" title="第六章 系统数据文件和信息"></a>第六章 系统数据文件和信息</h2><h3 id="6-1-引言"><a href="#6-1-引言" class="headerlink" title="6.1 引言"></a>6.1 引言</h3><pre><code>Unix系统的正常运作需要使用大量与系统有关的数据文件.  这些文件都是ASCII文本文件.
+但是对于较大的系统, 顺序扫描口令文件很花费时间, 我们需要能够以非ASCII文本格式存放这些文件,
+但仍向使用其他文件格式的应用程序提供接口. 对于这些数据文件的可一直接口是本章的主题, 也包含系统标识函数, 时间和日期函数等.
+</code></pre><h3 id="6-2-口令文件"><a href="#6-2-口令文件" class="headerlink" title="6.2 口令文件"></a>6.2 口令文件</h3><pre><code>Unix系统口令文件包含了下图所示字段, 这些字段在&lt;pwd.h&gt;中定义的passwd结构中
+</code></pre><p><img src="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/./passwd.png" alt="Alt text"><br>    在Linux中, 该文件中可能有以下内容</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 用户名:加密口令:数值用户ID:数值组ID:注释字段:初始工作目录:初始shell</span></span><br><span class="line">root:x:0:0:root:/root:/bin/bash</span><br><span class="line">squid:x:23:23::/var/spool/squid:/dev/null</span><br><span class="line">nobody:x:65534:65534:Nobody:/home:/bin/sh</span><br><span class="line">sar:x:205:105:Stephen Rago:/home/sar:/bin/bash</span><br></pre></td></tr></table></figure>
+<pre><code>1. 通常有一个用户名为root的登录项, 用户ID为0
+2. 加密口令字段包含了一个占位符, 但是解密口令字存放在另一个文件中
+3. 口令文件箱中的某些字段可能为空.如果为空, 通常意味着该用户没有口令. 
+4. shell字段包含了一个可执行程序名, 被用作该用户的登录shell. 
+5. 为了阻止一个特定用户登录, 除了使用/dev/null外, 还可以使用/bin/false用作登录shell
+6. 使用nobody作为用户名的目的是, 使任何人都可以登录该系统, 但只能访问人人皆可读写的文件.
+7. 使用finger命令的某些UNIX系统支持注释字段中的附加信息...感觉没啥用...
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwuid</span><span class="params">(<span class="keyword">uid_t</span> uid)</span></span>;</span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>这两个函数都返回的是passwd结构, 该接口通常是函数内部的静态变量, 
+只要调用任意相关函数, 其内容就会被重写. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setpwent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">endpwent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p><strong>getpwent</strong></p>
+<pre><code>调用getpwent时, 它返回口令文件中的下一个记录项. 每一次调用该函数, 都重写passwd结构. 第一次调用该函数时, 它打开使用的各个文件.
+</code></pre><p><strong>setpwent</strong></p>
+<pre><code>函数setpwent用来将getpwent的读写地址指向密码文件开头
+</code></pre><p><strong>endpwent</strong></p>
+<pre><code>endpwent关闭这些文件. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pwd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stddef.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">struct passwd *<span class="title">getpwnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *nam)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">passwd</span> *<span class="title">ptr</span>;</span></span><br><span class="line">    setpwent();</span><br><span class="line">    <span class="keyword">while</span> ((ptr = getpwent()) != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strcmp</span>(name, ptr-&gt;pw_name) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    endpwent();</span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>函数开始处调用setwent是自我保护性的措施, 一边确保之前有调用者打开过.
+</code></pre><h3 id="6-3-阴影文件"><a href="#6-3-阴影文件" class="headerlink" title="6.3 阴影文件"></a>6.3 阴影文件</h3><pre><code>现在某些系统将加密口令存放在另一个通常称为阴影口令的文件中, 该文件`至少要包括`用户名和加密口令.
+与该口令相关的其他信息也可以存放到该文件中.
+</code></pre><p><img src="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/./shadow.png" alt="Alt text"></p>
+<pre><code>仅有少数几个程序需要访问加密口令, 如login和passwd. 这些程序常常是设置用户ID为root的程序
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;shadow.h&gt;</span></span></span><br><span class="line"><span class="function">struct spwd *<span class="title">getspnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br><span class="line"><span class="function">struct spwd *<span class="title">getspent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setspent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">endspent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="6-4-组文件"><a href="#6-4-组文件" class="headerlink" title="6.4 组文件"></a>6.4 组文件</h3><pre><code>Unix组文件包含了下图所示字段, 这些字段包含在&lt;grp.h&gt;中定义的group结构中
+</code></pre><p><img src="/2019/02/18/APUE-阅读笔记-第六章-系统数据文件和信息/./group.png" alt="Alt text"></p>
+<pre><code>字段**gr_mem是一个指针数组, 其中每个指针指向一个属于该组的用户名, 该数组以null指针结尾
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="function">struct group *<span class="title">getgrgid</span><span class="params">(<span class="keyword">gid_t</span> gid)</span></span>;</span><br><span class="line"><span class="function">struct group *<span class="title">getgrnam</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>这两个函数通常也返回一个静态变量的指针, 每次调用时都重写该静态变量...
+如果需要搜索整个组文件, 则需要使用另外几个函数.
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="function">struct group *<span class="title">getgrent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setgrent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">endgrent</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<h3 id="6-5-附属组ID"><a href="#6-5-附属组ID" class="headerlink" title="6.5 附属组ID"></a>6.5 附属组ID</h3><pre><code>附属组ID: 我们不仅可以属于口令文件记录项中组ID对应的组, 也可以属于多至16个另外的组. 
+文件访问权限检查相应的修改为: 不仅将进程的有效组ID与文件的组ID相比较, 也将所有附属组ID与文件的组ID进行比较...
+使用附属组ID的优点是不必显式的经常更改组. 一个用户会参与多个项目, 因此需要同时属于多个组
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">getgroup</span><span class="params">(<span class="keyword">int</span> gidsetsize, <span class="keyword">gid_t</span> grouplist[])</span></span>;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;grp.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">setgroups</span><span class="params">(<span class="keyword">int</span> ngroups, <span class="keyword">const</span> <span class="keyword">gid_t</span> grouplist[])</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">initgroups</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *username, <span class="keyword">gid_t</span> basegid)</span></span>;</span><br></pre></td></tr></table></figure>
+<pre><code>getgroups将进程所属用户的各附属组ID填写到数组grouplist中, 填写入该数组的附属组ID数最多为gidsetsize个, 实际填写到数组中的附属组ID数由函数返回.
+作为一种特殊情况, 如果gidsetsize为0, 则函数只返回附属组ID数, 而对数组grouplist则不做修改..
+setgroups可以由超级用户调用以便为调用进程设置附属组ID表. grouplist是组ID数组, ngroups不大于NGROUP_MAX
+</code></pre><h3 id="6-8-登录账户记录"><a href="#6-8-登录账户记录" class="headerlink" title="6.8 登录账户记录"></a>6.8 登录账户记录</h3><pre><code>大多数UNIX系统都提供下面两个数据文件 , utmp文件记录当前登录到系统的各个用户,  wtmp文件跟踪各个登录和注销时间. 
+</code></pre><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">utmp</span>&#123;</span></span><br><span class="line">    <span class="keyword">char</span> ut_line[<span class="number">8</span>]; <span class="comment">/* tty line: "ttyh0" ... */</span></span><br><span class="line">    <span class="keyword">char</span> ut_name[<span class="number">8</span>]; <span class="comment">/* login name */</span></span><br><span class="line">    <span class="keyword">long</span> ut_time;    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>login 程序填写, 注销时擦除</p>
+</blockquote>
+<h3 id="6-9-系统标识"><a href="#6-9-系统标识" class="headerlink" title="6.9 系统标识"></a>6.9 系统标识</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/utsname.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">uname</span><span class="params">(struct utsname *name)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">gethostname</span><span class="params">(<span class="keyword">char</span> *name, <span class="keyword">int</span> namelen)</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="6-10-时间和日期例程"><a href="#6-10-时间和日期例程" class="headerlink" title="6.10 时间和日期例程"></a>6.10 时间和日期例程</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="keyword">time_t</span> time(<span class="keyword">time_t</span> *calptr)</span><br></pre></td></tr></table></figure>
+<p><em>这一章看的价值不大, 需要时当工具查就行</em></p>
+
+          
+        
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+       
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
   </section>
 
   
@@ -2399,7 +2676,7 @@ __attribute__((destructor(PRIORITY)))
                 
                   <a href="/archives/">
                 
-                    <span class="site-state-item-count">34</span>
+                    <span class="site-state-item-count">31</span>
                     <span class="site-state-item-name">日志</span>
                   </a>
                 </div>
@@ -2485,15 +2762,7 @@ __attribute__((destructor(PRIORITY)))
                     
                       
                     
-                      
-                    
-                      
-                    
-                      
-                    
-                      
-                    
-                    <span class="site-state-item-count">25</span>
+                    <span class="site-state-item-count">21</span>
                     <span class="site-state-item-name">标签</span>
                   </a>
                 </div>
