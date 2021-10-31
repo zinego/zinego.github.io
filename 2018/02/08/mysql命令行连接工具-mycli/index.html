@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic%7CPT+Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"yoursite.com","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":true,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="mycli介绍mycli是MySQL的一个命令行连接工具，有自动补全，有语法高亮。 项目地址: [mycli][1] 官网地址: [mycli官网][2] 借用官网的一张图：   安装Python Package:123pip install myclioreasy_install mycli  macOS1brew install mycli  Linux12345678## Debian&#x2F;Ub">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql命令行连接工具: mycli">
+<meta property="og:url" content="http://yoursite.com/2018/02/08/mysql%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%BF%9E%E6%8E%A5%E5%B7%A5%E5%85%B7-mycli/index.html">
+<meta property="og:site_name" content="zinego&#39;s blog">
+<meta property="og:description" content="mycli介绍mycli是MySQL的一个命令行连接工具，有自动补全，有语法高亮。 项目地址: [mycli][1] 官网地址: [mycli官网][2] 借用官网的一张图：   安装Python Package:123pip install myclioreasy_install mycli  macOS1brew install mycli  Linux12345678## Debian&#x2F;Ub">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://d33wubrfki0l68.cloudfront.net/0f0733732e766219aa0a83e631d5cd8b784edabc/5dc57/images/main.gif">
+<meta property="article:published_time" content="2018-02-08T02:25:33.000Z">
+<meta property="article:modified_time" content="2021-10-31T04:16:22.290Z">
+<meta property="article:author" content="zinego">
+<meta property="article:tag" content="软件安装">
+<meta property="article:tag" content="MySQL">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://d33wubrfki0l68.cloudfront.net/0f0733732e766219aa0a83e631d5cd8b784edabc/5dc57/images/main.gif">
+
+
+<link rel="canonical" href="http://yoursite.com/2018/02/08/mysql%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%BF%9E%E6%8E%A5%E5%B7%A5%E5%85%B7-mycli/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://yoursite.com/2018/02/08/mysql%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%BF%9E%E6%8E%A5%E5%B7%A5%E5%85%B7-mycli/","path":"2018/02/08/mysql命令行连接工具-mycli/","title":"mysql命令行连接工具: mycli"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>mysql命令行连接工具: mycli | zinego's blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">zinego's blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#mycli%E4%BB%8B%E7%BB%8D"><span class="nav-text">mycli介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Python-Package"><span class="nav-text">Python Package:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#macOS"><span class="nav-text">macOS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Linux"><span class="nav-text">Linux</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8Ubuntu%E4%B8%8A%E9%9D%A2%E5%AE%89%E8%A3%85%E5%87%BA%E9%94%99"><span class="nav-text">在Ubuntu上面安装出错</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%BA%E9%94%99%E4%BF%A1%E6%81%AF"><span class="nav-text">出错信息:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#pip-log"><span class="nav-text">pip.log</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8E%9F%E5%9B%A0"><span class="nav-text">原因</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="zinego"
+      src="/images/default.png">
+  <p class="site-author-name" itemprop="name">zinego</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/zinego" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/02/08/mysql%E5%91%BD%E4%BB%A4%E8%A1%8C%E8%BF%9E%E6%8E%A5%E5%B7%A5%E5%85%B7-mycli/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/default.png">
+      <meta itemprop="name" content="zinego">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zinego's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          mysql命令行连接工具: mycli
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2018-02-08 10:25:33" itemprop="dateCreated datePublished" datetime="2018-02-08T10:25:33+08:00">2018-02-08</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85/" itemprop="url" rel="index"><span itemprop="name">软件安装</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="mycli介绍"><a href="#mycli介绍" class="headerlink" title="mycli介绍"></a>mycli介绍</h2><pre><code>mycli是MySQL的一个命令行连接工具，有自动补全，有语法高亮。
+项目地址: [mycli][1]
+官网地址: [mycli官网][2]
+借用官网的一张图：
+</code></pre>
+<p><img src="http://d33wubrfki0l68.cloudfront.net/0f0733732e766219aa0a83e631d5cd8b784edabc/5dc57/images/main.gif"></p>
+<h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><h3 id="Python-Package"><a href="#Python-Package" class="headerlink" title="Python Package:"></a>Python Package:</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pip install mycli</span><br><span class="line">or</span><br><span class="line">easy_install mycli</span><br></pre></td></tr></table></figure>
+
+<h3 id="macOS"><a href="#macOS" class="headerlink" title="macOS"></a>macOS</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew install mycli</span><br></pre></td></tr></table></figure>
+
+<h3 id="Linux"><a href="#Linux" class="headerlink" title="Linux"></a>Linux</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">## Debian/Ubuntu Package:</span></span><br><span class="line">sudo apt-get update</span><br><span class="line">sudo apt-get install mycli</span><br><span class="line"><span class="comment">## Fedora</span></span><br><span class="line">sudo dnf install mycli</span><br><span class="line"><span class="comment">## RHEL, Centos:</span></span><br><span class="line">sudo yum install python-pip python-devel</span><br><span class="line">sudo pip install mycli</span><br></pre></td></tr></table></figure>
+
+<h2 id="在Ubuntu上面安装出错"><a href="#在Ubuntu上面安装出错" class="headerlink" title="在Ubuntu上面安装出错"></a>在Ubuntu上面安装出错</h2><h3 id="出错信息"><a href="#出错信息" class="headerlink" title="出错信息:"></a>出错信息:</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@VM-173-98-ubuntu:~$ pip install mycli</span><br><span class="line">Downloading/unpacking mycli</span><br><span class="line">  Downloading mycli-1.16.0-py2.py3-none-any.whl (54kB): 54kB downloaded</span><br><span class="line">Downloading/unpacking click&gt;=4.1 (from mycli)</span><br><span class="line">  Downloading click-6.7-py2.py3-none-any.whl (71kB): 71kB downloaded</span><br><span class="line">Downloading/unpacking cli-helpers[styles]&gt;=1.0.1 (from mycli)</span><br><span class="line">  Downloading cli_helpers-1.0.1-py2-none-any.whl</span><br><span class="line">Downloading/unpacking sqlparse&gt;=0.2.2,&lt;0.3.0 (from mycli)</span><br><span class="line">  Downloading sqlparse-0.2.4-py2.py3-none-any.whl</span><br><span class="line">Downloading/unpacking configobj&gt;=5.0.5 (from mycli)</span><br><span class="line">  Downloading configobj-5.0.6.tar.gz</span><br><span class="line">  Running setup.py (path:/tmp/pip_build_ubuntu/configobj/setup.py) egg_info <span class="keyword">for</span> package configobj</span><br><span class="line"></span><br><span class="line">Downloading/unpacking PyMySQL&gt;=0.6.7 (from mycli)</span><br><span class="line">  Downloading PyMySQL-0.8.0-py2.py3-none-any.whl (83kB): 83kB downloaded</span><br><span class="line">Downloading/unpacking cryptography&gt;=1.0.0 (from mycli)</span><br><span class="line">  Downloading cryptography-2.1.4.tar.gz (441kB): 441kB downloaded</span><br><span class="line">  Running setup.py (path:/tmp/pip_build_ubuntu/cryptography/setup.py) egg_info <span class="keyword">for</span> package cryptography</span><br><span class="line">    error <span class="keyword">in</span> cryptography setup <span class="built_in">command</span>: Invalid environment marker: python_version &lt; <span class="string">&#x27;3&#x27;</span></span><br><span class="line">    Complete output from <span class="built_in">command</span> python setup.py egg_info:</span><br><span class="line">    error <span class="keyword">in</span> cryptography setup <span class="built_in">command</span>: Invalid environment marker: python_version &lt; <span class="string">&#x27;3&#x27;</span></span><br><span class="line"></span><br><span class="line">----------------------------------------</span><br><span class="line">Cleaning up...</span><br><span class="line">Command python setup.py egg_info failed with error code 1 <span class="keyword">in</span> /tmp/pip_build_ubuntu/cryptography</span><br><span class="line">Storing debug <span class="built_in">log</span> <span class="keyword">for</span> failure <span class="keyword">in</span> /home/ubuntu/.pip/pip.log</span><br></pre></td></tr></table></figure>
+
+<h3 id="pip-log"><a href="#pip-log" class="headerlink" title="pip.log"></a>pip.log</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">Exception:</span><br><span class="line">Traceback (most recent call last):</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/dist-packages/pip/basecommand.py&quot;</span>, line 122, <span class="keyword">in</span> main</span><br><span class="line">    status = self.run(options, args)</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/dist-packages/pip/commands/install.py&quot;</span>, line 283, <span class="keyword">in</span> run</span><br><span class="line">    requirement_set.install(install_options, global_options, root=options.root_path)</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/dist-packages/pip/req.py&quot;</span>, line 1436, <span class="keyword">in</span> install</span><br><span class="line">    requirement.install(install_options, global_options, *args, **kwargs)</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/dist-packages/pip/req.py&quot;</span>, line 672, <span class="keyword">in</span> install</span><br><span class="line">    self.move_wheel_files(self.source_dir, root=root)</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/dist-packages/pip/req.py&quot;</span>, line 902, <span class="keyword">in</span> move_wheel_files</span><br><span class="line">    pycompile=self.pycompile,</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/dist-packages/pip/wheel.py&quot;</span>, line 206, <span class="keyword">in</span> move_wheel_files</span><br><span class="line">    clobber(<span class="built_in">source</span>, lib_dir, True)</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/dist-packages/pip/wheel.py&quot;</span>, line 193, <span class="keyword">in</span> clobber</span><br><span class="line">    os.makedirs(destsubdir)</span><br><span class="line">  File <span class="string">&quot;/usr/lib/python2.7/os.py&quot;</span>, line 157, <span class="keyword">in</span> makedirs</span><br><span class="line">    mkdir(name, mode)</span><br><span class="line">OSError: [Errno 13] Permission denied: <span class="string">&#x27;/usr/local/lib/python2.7/dist-packages/pip&#x27;</span></span><br></pre></td></tr></table></figure>
+<h3 id="原因"><a href="#原因" class="headerlink" title="原因"></a>原因</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">没加sudo权限🤦‍</span><br><span class="line">pip install mycli就OK了。。</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85/" rel="tag"># 软件安装</a>
+              <a href="/tags/MySQL/" rel="tag"># MySQL</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2018/07/24/Centos%E5%AE%89%E8%A3%85%E6%9C%80%E6%96%B0%E7%89%88RabbitMQ/" rel="next" title="Centos安装最新版RabbitMQ">
+                  Centos安装最新版RabbitMQ <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zinego</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">108k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js" integrity="sha256-EdPgYcPk/IIrw7FYeuJQexva49pVRZNmt3LculEr7zM=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"zinego","repo":"zinego.github.io","client_id":"dea7eb7ad85f46bab6fe","client_secret":"6107f50af24e60f1ed4da39d44c70aa68e21a592","admin_user":"zinego","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"8adbf5cd4e6d9b37154998afd606ee5c"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>

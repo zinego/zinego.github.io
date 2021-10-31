@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="https://fonts.loli.net/css?family=Noto+Serif+SC:300,300italic,400,400italic,700,700italic%7CPT+Mono:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"yoursite.com","root":"/","images":"/images","scheme":"Muse","darkmode":true,"version":"8.8.0","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":true,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="rabbitmq客户端(golang)源码解析源码地址 从建立连接开始消息流转过程如下 当客户端调用Dial(url)方法,解析url中的参数,并建立一条tcp连接,之后便开始消息流转   生成Connection12345678910111213141516171819&#x2F;*---------Open accepts an already established connection, or ot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rabbitmq客户端[golang]源码解析-建立连接">
+<meta property="og:url" content="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/index.html">
+<meta property="og:site_name" content="zinego&#39;s blog">
+<meta property="og:description" content="rabbitmq客户端(golang)源码解析源码地址 从建立连接开始消息流转过程如下 当客户端调用Dial(url)方法,解析url中的参数,并建立一条tcp连接,之后便开始消息流转   生成Connection12345678910111213141516171819&#x2F;*---------Open accepts an already established connection, or ot">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/376.png">
+<meta property="article:published_time" content="2018-08-15T13:41:17.000Z">
+<meta property="article:modified_time" content="2021-10-31T04:16:22.355Z">
+<meta property="article:author" content="zinego">
+<meta property="article:tag" content="RabbitMQ">
+<meta property="article:tag" content="消息队列">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/376.png">
+
+
+<link rel="canonical" href="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/","path":"2018/08/15/rabbitmq客户端-golang-源码解析-建立连接/","title":"rabbitmq客户端[golang]源码解析-建立连接"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>rabbitmq客户端[golang]源码解析-建立连接 | zinego's blog</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">zinego's blog</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90"><span class="nav-text">rabbitmq客户端(golang)源码解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%8E%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5%E5%BC%80%E5%A7%8B"><span class="nav-text">从建立连接开始</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%9F%E6%88%90Connection"><span class="nav-text">生成Connection</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Protocol-Header-%E5%8D%8F%E8%AE%AE%E5%A4%B4%E5%B8%A7%E7%9A%84%E5%8F%91%E9%80%81"><span class="nav-text">Protocol Header(协议头帧的发送)</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8E%A5%E5%8F%97%E6%9D%A5%E8%87%AA%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9A%84%E5%91%BD%E4%BB%A4"><span class="nav-text">接受来自服务端的命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Connection-Start"><span class="nav-text">Connection.Start</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Connection-Tune"><span class="nav-text">Connection.Tune</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Connection-Open"><span class="nav-text">Connection.Open</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B8%A7%E7%9A%84%E8%AF%BB%E5%8F%96"><span class="nav-text">帧的读取</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="zinego"
+      src="/images/default.png">
+  <p class="site-author-name" itemprop="name">zinego</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">21</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+  <a href="https://github.com/zinego" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/default.png">
+      <meta itemprop="name" content="zinego">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zinego's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          rabbitmq客户端[golang]源码解析-建立连接
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2018-08-15 21:41:17" itemprop="dateCreated datePublished" datetime="2018-08-15T21:41:17+08:00">2018-08-15</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" itemprop="url" rel="index"><span itemprop="name">消息队列</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+    <span class="post-meta-break"></span>
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>7.5k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="rabbitmq客户端-golang-源码解析"><a href="#rabbitmq客户端-golang-源码解析" class="headerlink" title="rabbitmq客户端(golang)源码解析"></a>rabbitmq客户端(golang)源码解析</h2><p><a target="_blank" rel="noopener" href="https://github.com/streadway/amqp">源码地址</a></p>
+<h3 id="从建立连接开始"><a href="#从建立连接开始" class="headerlink" title="从建立连接开始"></a>从建立连接开始</h3><pre><code>消息流转过程如下
+当客户端调用Dial(url)方法,解析url中的参数,并建立一条tcp连接,之后便开始消息流转
+</code></pre>
+<p><img src="./376.png" alt="Alt text"></p>
+<h4 id="生成Connection"><a href="#生成Connection" class="headerlink" title="生成Connection"></a>生成Connection</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">---------</span></span><br><span class="line"><span class="comment">Open accepts an already established connection, or other io.ReadWriteCloser as</span></span><br><span class="line"><span class="comment">a transport.  Use this method if you have established a TLS connection or wish</span></span><br><span class="line"><span class="comment">to use your own custom transport.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Open</span><span class="params">(conn io.ReadWriteCloser, config Config)</span> <span class="params">(*Connection, error)</span></span> &#123;</span><br><span class="line">    c := &amp;Connection&#123;</span><br><span class="line">        conn:      conn,</span><br><span class="line">        writer:    &amp;writer&#123;bufio.NewWriter(conn)&#125;, <span class="comment">//NewWriter创建一个具有默认大小缓冲、写入w的*Writer。</span></span><br><span class="line">        channels:  <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">uint16</span>]*Channel),</span><br><span class="line">        rpc:       <span class="built_in">make</span>(<span class="keyword">chan</span> message),</span><br><span class="line">        sends:     <span class="built_in">make</span>(<span class="keyword">chan</span> time.Time),</span><br><span class="line">        errors:    <span class="built_in">make</span>(<span class="keyword">chan</span> *Error, <span class="number">1</span>),</span><br><span class="line">        deadlines: <span class="built_in">make</span>(<span class="keyword">chan</span> readDeadliner, <span class="number">1</span>),</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">go</span> c.reader(conn) <span class="comment">//这里读的是来自server的消息</span></span><br><span class="line">    <span class="keyword">return</span> c, c.open(config)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该函数生成一个连接对象,并进行参数初始化,conn是之前生成的tcp连接</p>
+<h4 id="Protocol-Header-协议头帧的发送"><a href="#Protocol-Header-协议头帧的发送" class="headerlink" title="Protocol Header(协议头帧的发送)"></a>Protocol Header(协议头帧的发送)</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">open</span><span class="params">(config Config)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    <span class="comment">//先写了协议头[amqp 0091]过去,后期调用的是protocolHeader.write方法</span></span><br><span class="line">    <span class="keyword">if</span> err := c.send(&amp;protocolHeader&#123;&#125;); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> c.openStart(config)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个函数中,客户端发送了协议头帧,表面上看上去传入的是一个空的对象,但其中send中调用的是WriteFrame方法,WriteFrame方法中掉能用f.write方法,write方法是frame接口中的方法,protocolHeader实现了frame接口,实现的write方法如下</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(protocolHeader)</span> <span class="title">write</span><span class="params">(w io.Writer)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    _, err := w.Write([]<span class="keyword">byte</span>&#123;<span class="string">&#x27;A&#x27;</span>, <span class="string">&#x27;M&#x27;</span>, <span class="string">&#x27;Q&#x27;</span>, <span class="string">&#x27;P&#x27;</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">9</span>, <span class="number">1</span>&#125;)</span><br><span class="line">    <span class="keyword">return</span> err</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看出,此时写入的数据是<code>amqp0091</code></p>
+<h4 id="接受来自服务端的命令"><a href="#接受来自服务端的命令" class="headerlink" title="接受来自服务端的命令"></a>接受来自服务端的命令</h4><p>可以看到,在生成Connection的代码中有这么一条语句<code>go c.reader(conn)</code><br>代码一直追踪下去可以看到下面的代码</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">demux</span><span class="params">(f frame)</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> f.channel() == <span class="number">0</span> &#123;</span><br><span class="line">        c.dispatch0(f)</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        c.dispatchN(f)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre><code>f.channel()返回的是此时的ChannelID.显然,此时连接还未完全建立,channelID不可能存在,那么必然为0.那么我们看`dispatch0`方法
+</code></pre>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// channel未创建时期的调用. 此时,channelid=0</span></span><br><span class="line"><span class="comment">// 将读取到的命令写入rpc(chan)</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">dispatch0</span><span class="params">(f frame)</span></span> &#123;</span><br><span class="line">    <span class="keyword">switch</span> mf := f.(<span class="keyword">type</span>) &#123;</span><br><span class="line">    <span class="keyword">case</span> *methodFrame:</span><br><span class="line">        <span class="keyword">switch</span> m := mf.Method.(<span class="keyword">type</span>) &#123;</span><br><span class="line">        <span class="keyword">case</span> *connectionClose:</span><br><span class="line">            <span class="comment">// Send immediately as shutdown will close our side of the writer.</span></span><br><span class="line">            c.send(&amp;methodFrame&#123;</span><br><span class="line">                ChannelId: <span class="number">0</span>,</span><br><span class="line">                Method:    &amp;connectionCloseOk&#123;&#125;,</span><br><span class="line">            &#125;)</span><br><span class="line">            c.shutdown(newError(m.ReplyCode, m.ReplyText))</span><br><span class="line">        <span class="keyword">case</span> *connectionBlocked:</span><br><span class="line">            <span class="keyword">for</span> _, c := <span class="keyword">range</span> c.blocks &#123;</span><br><span class="line">                c &lt;- Blocking&#123;Active: <span class="literal">true</span>, Reason: m.Reason&#125;</span><br><span class="line">            &#125;</span><br><span class="line">        <span class="keyword">case</span> *connectionUnblocked:</span><br><span class="line">            <span class="keyword">for</span> _, c := <span class="keyword">range</span> c.blocks &#123;</span><br><span class="line">                c &lt;- Blocking&#123;Active: <span class="literal">false</span>&#125;</span><br><span class="line">            &#125;</span><br><span class="line">        <span class="keyword">default</span>:</span><br><span class="line">            c.rpc &lt;- m</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">case</span> *heartbeatFrame:</span><br><span class="line">        <span class="comment">// kthx - all reads reset our deadline.  so we can drop this</span></span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        <span class="comment">// lolwat - channel0 only responds to methods and heartbeats</span></span><br><span class="line">        c.closeWith(ErrUnexpectedFrame)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>方法中首先进行了类型推断,如果是方法帧,又对其进行了进一步处理.</p>
+<ul>
+<li>如果是Connection.Close: 那么此时直接返回Connection.CloseOk</li>
+<li>如果是ConnectionBlocked:这个我也不清楚</li>
+<li>如果是其他命令: 写入c.rpc管道中,等待进行进一步处理</li>
+</ul>
+<h4 id="Connection-Start"><a href="#Connection-Start" class="headerlink" title="Connection.Start"></a>Connection.Start</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">openStart</span><span class="params">(config Config)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    start := &amp;connectionStart&#123;&#125;</span><br><span class="line">    <span class="keyword">if</span> err := c.call(<span class="literal">nil</span>, start); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line">    c.Major = <span class="keyword">int</span>(start.VersionMajor)</span><br><span class="line">    c.Minor = <span class="keyword">int</span>(start.VersionMinor)</span><br><span class="line">    c.Properties = Table(start.ServerProperties)</span><br><span class="line">    c.Locales = strings.Split(start.Locales, <span class="string">&quot; &quot;</span>)</span><br><span class="line">    <span class="comment">// eventually support challenge/response here by also responding to</span></span><br><span class="line">    <span class="comment">// connectionSecure.</span></span><br><span class="line">    auth, ok := pickSASLMechanism(config.SASL, strings.Split(start.Mechanisms, <span class="string">&quot; &quot;</span>))</span><br><span class="line">    <span class="keyword">if</span> !ok &#123;</span><br><span class="line">        <span class="keyword">return</span> ErrSASL</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Save this mechanism off as the one we chose</span></span><br><span class="line">    c.Config.SASL = []Authentication&#123;auth&#125;</span><br><span class="line">    <span class="comment">// Set the connection locale to client locale</span></span><br><span class="line">    c.Config.Locale = config.Locale</span><br><span class="line">    <span class="keyword">return</span> c.openTune(config, auth)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在这个方法中,首先使用c.call方法去接收来自服务端的Connection.Start命令,call方法的原型为<code>call func(req message, res ...message) error</code>,当req为nil时,直接从c.rpc中获取消息,并通过反射,将消息存入到start中,其中有来自服务端的一些参数.在此方法中仅进行接收Connection.Start命令并保存其中的一些参数的操作</p>
+<h4 id="Connection-Tune"><a href="#Connection-Tune" class="headerlink" title="Connection.Tune"></a>Connection.Tune</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">openTune</span><span class="params">(config Config, auth Authentication)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(config.Properties) == <span class="number">0</span> &#123;</span><br><span class="line">        config.Properties = Table&#123;</span><br><span class="line">            <span class="string">&quot;product&quot;</span>: defaultProduct,</span><br><span class="line">            <span class="string">&quot;version&quot;</span>: defaultVersion,</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    config.Properties[<span class="string">&quot;capabilities&quot;</span>] = Table&#123;</span><br><span class="line">        <span class="string">&quot;connection.blocked&quot;</span>:     <span class="literal">true</span>,</span><br><span class="line">        <span class="string">&quot;consumer_cancel_notify&quot;</span>: <span class="literal">true</span>,</span><br><span class="line">    &#125;</span><br><span class="line">    ok := &amp;connectionStartOk&#123;</span><br><span class="line">        ClientProperties: config.Properties,</span><br><span class="line">        Mechanism:        auth.Mechanism(),</span><br><span class="line">        Response:         auth.Response(),</span><br><span class="line">        Locale:           config.Locale,</span><br><span class="line">    &#125;</span><br><span class="line">    tune := &amp;connectionTune&#123;&#125;</span><br><span class="line">    <span class="keyword">if</span> err := c.call(ok, tune); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="comment">// per spec, a connection can only be closed when it has been opened</span></span><br><span class="line">        <span class="comment">// so at this point, we know it&#x27;s an auth error, but the socket</span></span><br><span class="line">        <span class="comment">// was closed instead.  Return a meaningful error.</span></span><br><span class="line">        <span class="keyword">return</span> ErrCredentials</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// When the server and client both use default 0, then the max channel is</span></span><br><span class="line">    <span class="comment">// only limited by uint16.</span></span><br><span class="line">    <span class="comment">// 规定channel数量</span></span><br><span class="line">    c.Config.ChannelMax = pick(config.ChannelMax, <span class="keyword">int</span>(tune.ChannelMax))</span><br><span class="line">    <span class="keyword">if</span> c.Config.ChannelMax == <span class="number">0</span> &#123;</span><br><span class="line">        c.Config.ChannelMax = defaultChannelMax</span><br><span class="line">    &#125;</span><br><span class="line">    c.Config.ChannelMax = min(c.Config.ChannelMax, maxChannelMax)</span><br><span class="line">    <span class="comment">// Frame size includes headers and end byte (len(payload)+8), even if</span></span><br><span class="line">    <span class="comment">// this is less than FrameMinSize, use what the server sends because the</span></span><br><span class="line">    <span class="comment">// alternative is to stop the handshake here.</span></span><br><span class="line">    <span class="comment">//规定帧大小</span></span><br><span class="line">    c.Config.FrameSize = pick(config.FrameSize, <span class="keyword">int</span>(tune.FrameMax))</span><br><span class="line">    <span class="comment">// Save this off for resetDeadline()</span></span><br><span class="line">    c.Config.Heartbeat = time.Second * time.Duration(pick(</span><br><span class="line">        <span class="keyword">int</span>(config.Heartbeat/time.Second),</span><br><span class="line">        <span class="keyword">int</span>(tune.Heartbeat)))</span><br><span class="line">    <span class="comment">// &quot;The client should start sending heartbeats after receiving a</span></span><br><span class="line">    <span class="comment">// Connection.Tune method&quot;</span></span><br><span class="line">    <span class="keyword">go</span> c.heartbeater(c.Config.Heartbeat, c.NotifyClose(<span class="built_in">make</span>(<span class="keyword">chan</span> *Error, <span class="number">1</span>)))</span><br><span class="line">    <span class="keyword">if</span> err := c.send(&amp;methodFrame&#123;</span><br><span class="line">        ChannelId: <span class="number">0</span>,</span><br><span class="line">        Method: &amp;connectionTuneOk&#123;</span><br><span class="line">            ChannelMax: <span class="keyword">uint16</span>(c.Config.ChannelMax),</span><br><span class="line">            FrameMax:   <span class="keyword">uint32</span>(c.Config.FrameSize),</span><br><span class="line">            Heartbeat:  <span class="keyword">uint16</span>(c.Config.Heartbeat / time.Second),</span><br><span class="line">        &#125;,</span><br><span class="line">    &#125;); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> c.openVhost(config)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>该方法同样调用c.call方法,但与openStart不同的是,请求参数是connectionStartOk结构,实际上是Connection.StartOK命令的体现,该结构在发送时携带用户名密码,在服务端进行身份验证,返回值是来自服务端的Connection.Tune命令.之后进行channelMax和帧大小等一些配置的设置,这些设置是跟服务端的参数一起约定的.之后便进行心跳检测.客户端将在收到Connection.Tune命令之后进行心跳检测.<br>然后还是调用send方法,将Connection.TuneOK的命令发送出去,命令中携带了最大帧大小,最大信道数,心跳频率的设置,相当于服务端把自己的配置发送客户端,客户端根据某种方式和自己的参数进行约定,之后把约定好的配置再返回给服务端</p>
+<h4 id="Connection-Open"><a href="#Connection-Open" class="headerlink" title="Connection.Open"></a>Connection.Open</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">openVhost</span><span class="params">(config Config)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    req := &amp;connectionOpen&#123;VirtualHost: config.Vhost&#125;</span><br><span class="line">    res := &amp;connectionOpenOk&#123;&#125;</span><br><span class="line">    <span class="keyword">if</span> err := c.call(req, res); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="comment">// Cannot be closed yet, but we know it&#x27;s a vhost problem</span></span><br><span class="line">        <span class="keyword">return</span> ErrVhost</span><br><span class="line">    &#125;</span><br><span class="line">    c.Config.Vhost = config.Vhost</span><br><span class="line">    <span class="keyword">return</span> c.openComplete()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>此方法相对来讲十分简单,不做赘述</p>
+<h4 id="帧的读取"><a href="#帧的读取" class="headerlink" title="帧的读取"></a>帧的读取</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">  <span class="number">0</span>      <span class="number">1</span>         <span class="number">3</span>             <span class="number">7</span>                  size+<span class="number">7</span> size+<span class="number">8</span></span><br><span class="line">  +------+---------+-------------+  +------------+  +-----------+</span><br><span class="line">  | <span class="keyword">type</span> | channel |     size    |  |  payload   |  | frame-end |</span><br><span class="line">  +------+---------+-------------+  +------------+  +-----------+</span><br><span class="line">   octet   short         long         size octets       octet</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(r *reader)</span> <span class="title">ReadFrame</span><span class="params">()</span> <span class="params">(frame frame, err error)</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> scratch [<span class="number">7</span>]<span class="keyword">byte</span></span><br><span class="line">    <span class="keyword">if</span> _, err = io.ReadFull(r.r, scratch[:<span class="number">7</span>]); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="comment">// ReadFull从r精确地读取len(buf)字节数据填充进buf。函数返回写入的字节数和错误（如果没有读取足够的字节）。只有没有读取到字节时才可能返回EOF；</span></span><br><span class="line">        <span class="comment">// 如果读取了有但不够的字节时遇到了EOF，函数会返回ErrUnexpectedEOF。 只有返回值err为nil时，返回值n才会等于len(buf)。</span></span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    &#125;</span><br><span class="line">    typ := <span class="keyword">uint8</span>(scratch[<span class="number">0</span>])</span><br><span class="line">    channel := binary.BigEndian.Uint16(scratch[<span class="number">1</span>:<span class="number">3</span>])</span><br><span class="line">    size := binary.BigEndian.Uint32(scratch[<span class="number">3</span>:<span class="number">7</span>])</span><br><span class="line">    <span class="keyword">switch</span> typ &#123;</span><br><span class="line">    <span class="keyword">case</span> frameMethod: <span class="comment">//方法帧</span></span><br><span class="line">        <span class="keyword">if</span> frame, err = r.parseMethodFrame(channel, size); err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">case</span> frameHeader: <span class="comment">//内容头帧</span></span><br><span class="line">        <span class="keyword">if</span> frame, err = r.parseHeaderFrame(channel, size); err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">case</span> frameBody: <span class="comment">//消息体帧</span></span><br><span class="line">        <span class="keyword">if</span> frame, err = r.parseBodyFrame(channel, size); err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">case</span> frameHeartbeat: <span class="comment">//心跳帧</span></span><br><span class="line">        <span class="keyword">if</span> frame, err = r.parseHeartbeatFrame(channel, size); err != <span class="literal">nil</span> &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, ErrFrame</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> _, err = io.ReadFull(r.r, scratch[:<span class="number">1</span>]); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, err</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> scratch[<span class="number">0</span>] != frameEnd &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">nil</span>, ErrFrame</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一个帧的结构如下<br>[帧类型][信道编号][帧大小][方法帧][结束字节标记]<br>读取的时候,先读取7个字节的头部信息,其中包括一个字节的帧类型,两个字节的信道编号,四个字节的帧大小.<br>然后根据不同的的帧类型进行相应的处理<br>比如说,帧类型是方法帧,继续读出ClassID和Method,再根据编号判断出具体的方法,并进行进一步的处理<br>基本上知道帧的结构就很容易理解</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RabbitMQ/" rel="tag"># RabbitMQ</a>
+              <a href="/tags/%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/" rel="tag"># 消息队列</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2018/08/15/AMQP%E5%B8%A7%E7%BB%93%E6%9E%84/" rel="prev" title="AMQP帧结构">
+                  <i class="fa fa-chevron-left"></i> AMQP帧结构
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/01/17/APUE-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0-%E7%AC%AC%E4%B8%80%E7%AB%A0-Unix%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/" rel="next" title="APUE 阅读笔记 第一章 Unix 基础知识">
+                  APUE 阅读笔记 第一章 Unix 基础知识 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zinego</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">108k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">1:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script size="300" alpha="0.6" zIndex="-1" src="https://cdn.jsdelivr.net/npm/ribbon.js@1.0.2/dist/ribbon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js" integrity="sha256-EdPgYcPk/IIrw7FYeuJQexva49pVRZNmt3LculEr7zM=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">false</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdn.jsdelivr.net/npm/mathjax@3.2.0/es5/tex-mml-chtml.js","integrity":"sha256-r+3itOMtGGjap0x+10hu6jW/gZCzxHsoKrOd7gyRSGY="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"zinego","repo":"zinego.github.io","client_id":"dea7eb7ad85f46bab6fe","client_secret":"6107f50af24e60f1ed4da39d44c70aa68e21a592","admin_user":"zinego","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":"zh-CN","js":{"url":"https://cdn.jsdelivr.net/npm/gitalk@1.7.2/dist/gitalk.min.js","integrity":"sha256-Pmj85ojLaPOWwRtlMJwmezB/Qg8BzvJp5eTzvXaYAfA="},"path_md5":"906534a982fa73bdf67ce9c9426f2545"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>
