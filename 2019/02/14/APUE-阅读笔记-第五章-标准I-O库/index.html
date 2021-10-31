@@ -28,16 +28,16 @@
 <meta property="og:site_name" content="zinego&#39;s blog">
 <meta property="og:description" content="第五章 标准I&#x2F;O库5.1 引言不仅是UNIX, 很多其他操作系统都实现了标准I&#x2F;O库, 所以这个库由ISO C标准说明  5.2 流和FILE对象在第三章中, 所有I&#x2F;O函数都是围绕文件描述符的.  当打开一个文件, 返回一个文件描述符, 然后该文件描述符就用于后续的I&#x2F;O操作. 在标准I&#x2F;O中, 他们的操作围绕流进行 流的定向决定了所读写的字符是单字节还是多字节的. 当一个流被创建的时候, 并">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://yoursite.com/2019/02/14/APUE-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0-%E7%AC%AC%E4%BA%94%E7%AB%A0-%E6%A0%87%E5%87%86I-O%E5%BA%93/%E6%A0%87%E5%87%86IO.png">
-<meta property="og:image" content="http://yoursite.com/2019/02/14/APUE-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0-%E7%AC%AC%E4%BA%94%E7%AB%A0-%E6%A0%87%E5%87%86I-O%E5%BA%93/%E6%A0%87%E5%87%86IO2.png">
+<meta property="og:image" content="http://yoursite.com/image/%E6%A0%87%E5%87%86IO.png">
+<meta property="og:image" content="http://yoursite.com/image/%E6%A0%87%E5%87%86IO2.png">
 <meta property="article:published_time" content="2019-02-14T03:19:18.000Z">
-<meta property="article:modified_time" content="2021-10-31T04:16:22.267Z">
+<meta property="article:modified_time" content="2021-10-31T05:59:30.990Z">
 <meta property="article:author" content="zinego">
 <meta property="article:tag" content="UNIX">
 <meta property="article:tag" content="读书">
 <meta property="article:tag" content="C语言">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://yoursite.com/2019/02/14/APUE-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0-%E7%AC%AC%E4%BA%94%E7%AB%A0-%E6%A0%87%E5%87%86I-O%E5%BA%93/%E6%A0%87%E5%87%86IO.png">
+<meta name="twitter:image" content="http://yoursite.com/image/%E6%A0%87%E5%87%86IO.png">
 
 
 <link rel="canonical" href="http://yoursite.com/2019/02/14/APUE-%E9%98%85%E8%AF%BB%E7%AC%94%E8%AE%B0-%E7%AC%AC%E4%BA%94%E7%AB%A0-%E6%A0%87%E5%87%86I-O%E5%BA%93/">
@@ -225,7 +225,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+        <time title="修改时间：2021-10-31 13:59:30" itemprop="dateModified" datetime="2021-10-31T13:59:30+08:00">2021-10-31</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -345,13 +345,13 @@ _IONBF  不带缓冲
     该函数常用于由创建管道和网络通信通道函数返回的描述符.
 </code></pre>
 <p><strong>type参数</strong> </p>
-<p><img src="./%E6%A0%87%E5%87%86IO.png" alt="Alt text"></p>
+<p><img src="/image/%E6%A0%87%E5%87%86IO.png" alt="Alt text"></p>
 <pre><code>使用b来区分二进制文件或者文本文件
 当以读写打开一个文件时(type中+号), 具有以下限制
 1. 如果中间没有fflush, fseek, fsetpos或者rewind, 则在输出的后面不能直接跟随输入
 2. 如果中间没有fseek, fsetpos或者rewind, 或者一个输入操作没有到达文件尾端, 则在输入操作之后不能直接跟随输出
 </code></pre>
-<p><img src="./%E6%A0%87%E5%87%86IO2.png" alt="Alt text"></p>
+<p><img src="/image/%E6%A0%87%E5%87%86IO2.png" alt="Alt text"></p>
 <pre><code>在指定w或者a类型来创建一个新文件时, 我们无法说明文件的访问权限位,默认rw-rw-rw-
 可以使用umask来限制这些权限.
 </code></pre>

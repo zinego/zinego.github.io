@@ -213,7 +213,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+        <time title="修改时间：2021-10-31 13:59:30" itemprop="dateModified" datetime="2021-10-31T13:59:30+08:00">2021-10-31</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -326,13 +326,13 @@ _IONBF  不带缓冲
     该函数常用于由创建管道和网络通信通道函数返回的描述符.
 </code></pre>
 <p><strong>type参数</strong> </p>
-<p><img src="./%E6%A0%87%E5%87%86IO.png" alt="Alt text"></p>
+<p><img src="/image/%E6%A0%87%E5%87%86IO.png" alt="Alt text"></p>
 <pre><code>使用b来区分二进制文件或者文本文件
 当以读写打开一个文件时(type中+号), 具有以下限制
 1. 如果中间没有fflush, fseek, fsetpos或者rewind, 则在输出的后面不能直接跟随输入
 2. 如果中间没有fseek, fsetpos或者rewind, 或者一个输入操作没有到达文件尾端, 则在输入操作之后不能直接跟随输出
 </code></pre>
-<p><img src="./%E6%A0%87%E5%87%86IO2.png" alt="Alt text"></p>
+<p><img src="/image/%E6%A0%87%E5%87%86IO2.png" alt="Alt text"></p>
 <pre><code>在指定w或者a类型来创建一个新文件时, 我们无法说明文件的访问权限位,默认rw-rw-rw-
 可以使用umask来限制这些权限.
 </code></pre>
@@ -509,7 +509,7 @@ type参数控制如何使用流...取值对应基于文件的标准I/O的type参
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+        <time title="修改时间：2021-10-31 13:59:30" itemprop="dateModified" datetime="2021-10-31T13:59:30+08:00">2021-10-31</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -565,8 +565,8 @@ type参数控制如何使用流...取值对应基于文件的标准I/O的type参
 <h3 id="4-14-文件系统"><a href="#4-14-文件系统" class="headerlink" title="4.14 文件系统"></a>4.14 文件系统</h3><pre><code>可以把一个磁盘分成一个或者多个分区, 每个分区可以包含一个文件系统, 如下图
 节点是固定长度的记录项, 包含文件的绝大部分信息. 
 </code></pre>
-<p><img src="./%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F1.png" alt="Alt text"></p>
-<p><img src="./%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F2.png" alt="Alt text"></p>
+<p><img src="/image/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F1.png" alt="Alt text"></p>
+<p><img src="/image/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F2.png" alt="Alt text"></p>
 <p><strong>引用计数</strong></p>
 <pre><code>如上图所示, 多个目录项指向一个i节点, 每个i节点中都有一个连接计数, 
 只有当连接计数减少至0时, 才可以删除该文件(释放文件占用的数据块)
@@ -590,7 +590,7 @@ i节点编号的数据类型是ino_t
 <pre><code>当不更换文件系统的情况下问一个文件重命名时, 文件的实际内容并未移动. 
 只需要构造一个指向现有i节点的新目录项, 并删除老的目录项, 连接计数不会改变.
 </code></pre>
-<p><img src="./%E6%96%87%E4%BB%B6%E9%87%8D%E5%91%BD%E5%90%8D.png" alt="Alt text"></p>
+<p><img src="/image/%E6%96%87%E4%BB%B6%E9%87%8D%E5%91%BD%E5%90%8D.png" alt="Alt text"></p>
 <p><strong>目录文件的连接计数</strong></p>
 <pre><code>编号2549的节点, 其类型字段标识它是一个目录, 连接计数为2. 
 任何一个叶子目录的连接计数总是2
@@ -751,7 +751,7 @@ utimensat的flag参数来决定是否跟随符号链接
 
 
 
-<h3 id="4-24-设备特殊文件"><a href="#4-24-设备特殊文件" class="headerlink" title="4.24 设备特殊文件"></a>4.24 设备特殊文件</h3><h3 id="4-25-文件访问权限位小结"><a href="#4-25-文件访问权限位小结" class="headerlink" title="4.25 文件访问权限位小结"></a>4.25 文件访问权限位小结</h3><p><img src="./%E6%96%87%E4%BB%B6%E8%AE%BF%E9%97%AE%E6%9D%83%E9%99%90%E4%BD%8D.png" alt="Alt text"></p>
+<h3 id="4-24-设备特殊文件"><a href="#4-24-设备特殊文件" class="headerlink" title="4.24 设备特殊文件"></a>4.24 设备特殊文件</h3><h3 id="4-25-文件访问权限位小结"><a href="#4-25-文件访问权限位小结" class="headerlink" title="4.25 文件访问权限位小结"></a>4.25 文件访问权限位小结</h3><p><img src="/image/%E6%96%87%E4%BB%B6%E8%AE%BF%E9%97%AE%E6%9D%83%E9%99%90%E4%BD%8D.png" alt="Alt text"></p>
 
       
     </div>
@@ -1322,7 +1322,7 @@ chmod只是更改i节点最近一次被修改的时间, ls -l列出的是最后�
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+        <time title="修改时间：2021-10-31 13:59:30" itemprop="dateModified" datetime="2021-10-31T13:59:30+08:00">2021-10-31</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1429,7 +1429,7 @@ leeek 仅将当前文件偏移量记录在内核中, 并不引起任何I/O操作
 <pre><code>如果read成功, 则返回读取到的字节数. 如果已经到达文件尾端,返回0;
 实际读取到的字节数少于要求读的字节数的情况: 
 </code></pre>
-<p><img src="./111.png"></p>
+<p><img src="/image/111.png"></p>
 <h3 id="3-8-函数write"><a href="#3-8-函数write" class="headerlink" title="3.8 函数write"></a>3.8 函数write</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">ssize_t</span> <span class="title">write</span><span class="params">(<span class="keyword">int</span> fd, <span class="keyword">const</span> <span class="keyword">void</span> *buf, <span class="keyword">size_t</span> nbytes)</span></span>;</span><br></pre></td></tr></table></figure>
 <pre><code>write 出错常见原因是磁盘已经写满, 或者超过了一个给定进程的文件长度限制
 </code></pre>
@@ -1722,7 +1722,7 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+        <time title="修改时间：2021-10-31 13:59:30" itemprop="dateModified" datetime="2021-10-31T13:59:30+08:00">2021-10-31</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1763,7 +1763,7 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
 <h3 id="从建立连接开始"><a href="#从建立连接开始" class="headerlink" title="从建立连接开始"></a>从建立连接开始</h3><pre><code>消息流转过程如下
 当客户端调用Dial(url)方法,解析url中的参数,并建立一条tcp连接,之后便开始消息流转
 </code></pre>
-<p><img src="./376.png" alt="Alt text"></p>
+<p><img src="/image/376.png" alt="Alt text"></p>
 <h4 id="生成Connection"><a href="#生成Connection" class="headerlink" title="生成Connection"></a>生成Connection</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">---------</span></span><br><span class="line"><span class="comment">Open accepts an already established connection, or other io.ReadWriteCloser as</span></span><br><span class="line"><span class="comment">a transport.  Use this method if you have established a TLS connection or wish</span></span><br><span class="line"><span class="comment">to use your own custom transport.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Open</span><span class="params">(conn io.ReadWriteCloser, config Config)</span> <span class="params">(*Connection, error)</span></span> &#123;</span><br><span class="line">    c := &amp;Connection&#123;</span><br><span class="line">        conn:      conn,</span><br><span class="line">        writer:    &amp;writer&#123;bufio.NewWriter(conn)&#125;, <span class="comment">//NewWriter创建一个具有默认大小缓冲、写入w的*Writer。</span></span><br><span class="line">        channels:  <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">uint16</span>]*Channel),</span><br><span class="line">        rpc:       <span class="built_in">make</span>(<span class="keyword">chan</span> message),</span><br><span class="line">        sends:     <span class="built_in">make</span>(<span class="keyword">chan</span> time.Time),</span><br><span class="line">        errors:    <span class="built_in">make</span>(<span class="keyword">chan</span> *Error, <span class="number">1</span>),</span><br><span class="line">        deadlines: <span class="built_in">make</span>(<span class="keyword">chan</span> readDeadliner, <span class="number">1</span>),</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">go</span> c.reader(conn) <span class="comment">//这里读的是来自server的消息</span></span><br><span class="line">    <span class="keyword">return</span> c, c.open(config)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>该函数生成一个连接对象,并进行参数初始化,conn是之前生成的tcp连接</p>
 <h4 id="Protocol-Header-协议头帧的发送"><a href="#Protocol-Header-协议头帧的发送" class="headerlink" title="Protocol Header(协议头帧的发送)"></a>Protocol Header(协议头帧的发送)</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">open</span><span class="params">(config Config)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    <span class="comment">//先写了协议头[amqp 0091]过去,后期调用的是protocolHeader.write方法</span></span><br><span class="line">    <span class="keyword">if</span> err := c.send(&amp;protocolHeader&#123;&#125;); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> c.openStart(config)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -1846,7 +1846,7 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+        <time title="修改时间：2021-10-31 13:59:30" itemprop="dateModified" datetime="2021-10-31T13:59:30+08:00">2021-10-31</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -1890,7 +1890,7 @@ POSIX和ISO C将而将errno定义成一个符号, 它扩展成为一个可修改
 <li>帧有效载荷</li>
 <li>结束字节标记</li>
 </ul>
-<p><img src="./377.png"></p>
+<p><img src="/image/377.png"></p>
 <h3 id="帧类型"><a href="#帧类型" class="headerlink" title="帧类型"></a>帧类型</h3><ul>
 <li>协议头帧用于连接到rabbitmq,仅使用一次</li>
 <li>方法帧携带发送给rabbitmq或从rabbitmq接收到的rpc请求或响应</li>

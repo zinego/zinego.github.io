@@ -28,14 +28,14 @@
 <meta property="og:site_name" content="zinego&#39;s blog">
 <meta property="og:description" content="rabbitmq客户端(golang)源码解析源码地址 从建立连接开始消息流转过程如下 当客户端调用Dial(url)方法,解析url中的参数,并建立一条tcp连接,之后便开始消息流转   生成Connection12345678910111213141516171819&#x2F;*---------Open accepts an already established connection, or ot">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/376.png">
+<meta property="og:image" content="http://yoursite.com/image/376.png">
 <meta property="article:published_time" content="2018-08-15T13:41:17.000Z">
-<meta property="article:modified_time" content="2021-10-31T04:16:22.355Z">
+<meta property="article:modified_time" content="2021-10-31T05:59:30.987Z">
 <meta property="article:author" content="zinego">
 <meta property="article:tag" content="RabbitMQ">
 <meta property="article:tag" content="消息队列">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/376.png">
+<meta name="twitter:image" content="http://yoursite.com/image/376.png">
 
 
 <link rel="canonical" href="http://yoursite.com/2018/08/15/rabbitmq%E5%AE%A2%E6%88%B7%E7%AB%AF-golang-%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5/">
@@ -223,7 +223,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-10-31 12:16:22" itemprop="dateModified" datetime="2021-10-31T12:16:22+08:00">2021-10-31</time>
+        <time title="修改时间：2021-10-31 13:59:30" itemprop="dateModified" datetime="2021-10-31T13:59:30+08:00">2021-10-31</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -271,7 +271,7 @@
 <h3 id="从建立连接开始"><a href="#从建立连接开始" class="headerlink" title="从建立连接开始"></a>从建立连接开始</h3><pre><code>消息流转过程如下
 当客户端调用Dial(url)方法,解析url中的参数,并建立一条tcp连接,之后便开始消息流转
 </code></pre>
-<p><img src="./376.png" alt="Alt text"></p>
+<p><img src="/image/376.png" alt="Alt text"></p>
 <h4 id="生成Connection"><a href="#生成Connection" class="headerlink" title="生成Connection"></a>生成Connection</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">---------</span></span><br><span class="line"><span class="comment">Open accepts an already established connection, or other io.ReadWriteCloser as</span></span><br><span class="line"><span class="comment">a transport.  Use this method if you have established a TLS connection or wish</span></span><br><span class="line"><span class="comment">to use your own custom transport.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">Open</span><span class="params">(conn io.ReadWriteCloser, config Config)</span> <span class="params">(*Connection, error)</span></span> &#123;</span><br><span class="line">    c := &amp;Connection&#123;</span><br><span class="line">        conn:      conn,</span><br><span class="line">        writer:    &amp;writer&#123;bufio.NewWriter(conn)&#125;, <span class="comment">//NewWriter创建一个具有默认大小缓冲、写入w的*Writer。</span></span><br><span class="line">        channels:  <span class="built_in">make</span>(<span class="keyword">map</span>[<span class="keyword">uint16</span>]*Channel),</span><br><span class="line">        rpc:       <span class="built_in">make</span>(<span class="keyword">chan</span> message),</span><br><span class="line">        sends:     <span class="built_in">make</span>(<span class="keyword">chan</span> time.Time),</span><br><span class="line">        errors:    <span class="built_in">make</span>(<span class="keyword">chan</span> *Error, <span class="number">1</span>),</span><br><span class="line">        deadlines: <span class="built_in">make</span>(<span class="keyword">chan</span> readDeadliner, <span class="number">1</span>),</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">go</span> c.reader(conn) <span class="comment">//这里读的是来自server的消息</span></span><br><span class="line">    <span class="keyword">return</span> c, c.open(config)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>该函数生成一个连接对象,并进行参数初始化,conn是之前生成的tcp连接</p>
 <h4 id="Protocol-Header-协议头帧的发送"><a href="#Protocol-Header-协议头帧的发送" class="headerlink" title="Protocol Header(协议头帧的发送)"></a>Protocol Header(协议头帧的发送)</h4><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(c *Connection)</span> <span class="title">open</span><span class="params">(config Config)</span> <span class="title">error</span></span> &#123;</span><br><span class="line">    <span class="comment">//先写了协议头[amqp 0091]过去,后期调用的是protocolHeader.write方法</span></span><br><span class="line">    <span class="keyword">if</span> err := c.send(&amp;protocolHeader&#123;&#125;); err != <span class="literal">nil</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> err</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> c.openStart(config)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
